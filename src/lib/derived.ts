@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { AppData, MealEntry, Member, Recipe } from '../types'
 import { itemKey, useStore } from '../store'
 import { findAvoided, isStaple, parseIngredient, sameIngredient } from './ingredients'
-import { daysAgoISO } from './dates'
+import { addDaysISO, daysAgoISO } from './dates'
 
 export interface RecipeStats {
   timesCooked: number
@@ -113,4 +113,16 @@ export function mealTitle(meal: MealEntry, data: AppData): string {
     return meal.description || (name ? `${name} (leftovers)` : 'Leftovers')
   }
   return meal.description
+}
+
+/** Consecutive days with at least one eaten meal, ending today (or yesterday, if today is still empty). */
+export function loggingStreak(meals: MealEntry[], today: string): number {
+  const days = new Set(meals.filter((m) => m.status === 'eaten').map((m) => m.date))
+  let d = days.has(today) ? today : addDaysISO(today, -1)
+  let n = 0
+  while (days.has(d)) {
+    n++
+    d = addDaysISO(d, -1)
+  }
+  return n
 }

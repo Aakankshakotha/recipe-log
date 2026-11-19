@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { deleteImage, resizeImage, saveImage, useImageURL } from '../lib/images'
+import { foodEmoji, foodTint } from '../lib/food'
 
 export function Modal({
   title,
@@ -37,20 +38,35 @@ export function Modal({
   )
 }
 
-export function Photo({
-  id,
-  alt,
-  className,
-  fallback,
-}: {
-  id: string | null | undefined
-  alt: string
-  className?: string
-  fallback?: ReactNode
-}) {
+export function Photo({ id, alt, className }: { id: string | null | undefined; alt: string; className?: string }) {
   const url = useImageURL(id)
-  if (!url) return fallback ? <div className={`photo-fallback ${className ?? ''}`}>{fallback}</div> : null
+  if (!url) return null
   return <img src={url} alt={alt} className={className} loading="lazy" />
+}
+
+/** A dish's photo, or a tinted emoji tile guessed from its name when there's no photo. */
+export function DishImage({
+  photoId,
+  name,
+  category,
+  className,
+}: {
+  photoId: string | null | undefined
+  name: string
+  category?: string
+  className?: string
+}) {
+  const url = useImageURL(photoId)
+  if (url) return <img src={url} alt="" className={`dish-img ${className ?? ''}`} loading="lazy" />
+  return (
+    <div
+      className={`dish-img dish-emoji ${className ?? ''}`}
+      style={{ '--tint': foodTint(name) } as CSSProperties}
+      aria-hidden
+    >
+      <span>{foodEmoji(name, category)}</span>
+    </div>
+  )
 }
 
 /** Shows the current photo with change/remove buttons. Calls onChange with the new image id. */

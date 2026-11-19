@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../nav'
 import { addDaysISO, daysAgoISO, formatDate, todayISO, weekStartISO } from '../lib/dates'
-import { computeRecipeStats } from '../lib/derived'
+import { computeRecipeStats, loggingStreak } from '../lib/derived'
 import { Empty } from './ui'
 
 const RANGES = [
@@ -72,17 +72,7 @@ export function InsightsView() {
       .slice(0, 6)
   }, [eaten, data.recipes])
 
-  // Consecutive days with at least one meal logged, ending today (or yesterday)
-  const streak = useMemo(() => {
-    const days = new Set(eaten.map((m) => m.date))
-    let d = days.has(today) ? today : addDaysISO(today, -1)
-    let n = 0
-    while (days.has(d)) {
-      n++
-      d = addDaysISO(d, -1)
-    }
-    return n
-  }, [eaten, today])
+  const streak = useMemo(() => loggingStreak(eaten, today), [eaten, today])
 
   const heat = useMemo(() => {
     const counts = new Map<string, number>()

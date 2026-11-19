@@ -7,7 +7,7 @@ import { avoidWarnings, usePantryMatches, useRecipeStats } from '../lib/derived'
 import { RecipeForm } from './RecipeForm'
 import { RecipeDetail } from './RecipeDetail'
 import { ImportRecipe } from './ImportRecipe'
-import { Empty, Photo, Segmented } from './ui'
+import { DishImage, Empty, Segmented } from './ui'
 
 interface Props {
   openId: string | null
@@ -169,7 +169,7 @@ export function RecipesView({ openId, setOpenId }: Props) {
             return (
               <li key={r.id}>
                 <button className="card recipe-card" onClick={() => setOpenId(r.id)}>
-                  <Photo id={r.photoId} alt="" className="recipe-photo" fallback={<span>🍲</span>} />
+                  <DishImage photoId={r.photoId} name={r.name} category={r.category} className="recipe-photo" />
                   <div className="recipe-card-body">
                     <div className="recipe-card-head">
                       <strong>{r.name}</strong>

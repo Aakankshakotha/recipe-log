@@ -65,6 +65,15 @@ export function useAppData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
 
+  // Keep other open tabs (or the installed app next to a browser tab) in sync instead of overwriting each other
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) setData(normalize(JSON.parse(e.newValue)))
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   useEffect(() => {
     const root = document.documentElement
     if (data.settings.theme === 'system') root.removeAttribute('data-theme')
