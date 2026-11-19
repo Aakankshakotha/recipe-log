@@ -1,94 +1,107 @@
-import { useRef, useState, type ChangeEvent } from 'react'
-import { todayISO, useAppData } from './store'
-import type { AppData, MealEntry } from './types'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { StoreContext, useAppData } from './store'
+import { NavContext, type Nav, type Tab } from './nav'
+import type { MealEntry } from './types'
+import { TodayView } from './components/TodayView'
+import { WeekView } from './components/WeekView'
 import { RecipesView } from './components/RecipesView'
-import { MealLogView } from './components/MealLogView'
+import { KitchenView } from './components/KitchenView'
 import { InsightsView } from './components/InsightsView'
+import { SettingsView } from './components/SettingsView'
+import { MealForm } from './components/MealForm'
+import { CookMode } from './components/CookMode'
 
-type Tab = 'meals' | 'recipes' | 'insights'
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'meals', label: 'Meal log' },
-  { id: 'recipes', label: 'Recipes' },
-  { id: 'insights', label: 'Insights' },
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'today', label: 'Today', icon: '🏠' },
+  { id: 'week', label: 'Week', icon: '📅' },
+  { id: 'recipes', label: 'Recipes', icon: '📖' },
+  { id: 'kitchen', label: 'Kitchen', icon: '🛒' },
+  { id: 'insights', label: 'Insights', icon: '📊' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export default function App() {
   const store = useAppData()
-  const [tab, setTab] = useState<Tab>('meals')
+  const [tab, setTab] = useState<Tab>('today')
+  const [recipeId, setRecipeId] = useState<string | null>(null)
   const [mealDraft, setMealDraft] = useState<Partial<MealEntry> | null>(null)
-  const fileInput = useRef<HTMLInputElement>(null)
+  const [cookingId, setCookingId] = useState<string | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const toastTimer = useRef<number>(undefined)
 
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(store.data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `recipe-log-${todayISO()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  const go = useCallback((t: Tab) => {
+    setTab(t)
+    if (t === 'recipes') setRecipeId(null)
+    window.scrollTo({ top: 0 })
+  }, [])
 
-  const importData = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    try {
-      const parsed = JSON.parse(await file.text()) as AppData
-      if (!Array.isArray(parsed.recipes) || !Array.isArray(parsed.meals)) throw new Error()
-      if (confirm('Replace all current recipes and meals with this backup?')) {
-        store.replaceAll(parsed)
-      }
-    } catch {
-      alert('That file doesn’t look like a Recipe Log backup.')
-    }
-  }
+  const nav = useMemo<Nav>(
+    () => ({
+      go,
+      openRecipe: (id) => {
+        setTab('recipes')
+        setRecipeId(id)
+        window.scrollTo({ top: 0 })
+      },
+      editMeal: setMealDraft,
+      cook: setCookingId,
+      toast: (message) => {
+        setToastMsg(message)
+        window.clearTimeout(toastTimer.current)
+        toastTimer.current = window.setTimeout(() => setToastMsg(null), 3200)
+      },
+    }),
+    [go],
+  )
+
+  const cooking = cookingId ? store.data.recipes.find((r) => r.id === cookingId) : undefined
+  const unchecked = store.data.groceries.filter((g) => !g.checked).length
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>🍲 Recipe Log</h1>
-        <nav className="tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              className={tab === t.id ? 'tab active' : 'tab'}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
+    <StoreContext.Provider value={store}>
+      <NavContext.Provider value={nav}>
+        <div className="app">
+          <header className="header">
+            <button className="brand" onClick={() => go('today')}>
+              <span className="brand-icon">🍲</span>
+              <span>Recipe Log</span>
             </button>
-          ))}
-        </nav>
-        <div className="backup">
-          <button className="ghost small" onClick={exportData} title="Download a backup file">
-            Export
-          </button>
-          <button
-            className="ghost small"
-            onClick={() => fileInput.current?.click()}
-            title="Restore from a backup file"
-          >
-            Import
-          </button>
-          <input ref={fileInput} type="file" accept="application/json" hidden onChange={importData} />
-        </div>
-      </header>
+            <nav className="tabs" aria-label="Main">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={tab === t.id ? 'tab active' : 'tab'}
+                  onClick={() => go(t.id)}
+                  aria-current={tab === t.id ? 'page' : undefined}
+                >
+                  <span className="tab-icon" aria-hidden>
+                    {t.icon}
+                  </span>
+                  <span className="tab-label">{t.label}</span>
+                  {t.id === 'kitchen' && unchecked > 0 && <span className="badge">{unchecked}</span>}
+                </button>
+              ))}
+            </nav>
+          </header>
 
-      <main>
-        {tab === 'meals' && (
-          <MealLogView store={store} draft={mealDraft} setDraft={setMealDraft} />
+          <main key={tab} className="view">
+            {tab === 'today' && <TodayView />}
+            {tab === 'week' && <WeekView />}
+            {tab === 'recipes' && <RecipesView openId={recipeId} setOpenId={setRecipeId} />}
+            {tab === 'kitchen' && <KitchenView />}
+            {tab === 'insights' && <InsightsView />}
+            {tab === 'settings' && <SettingsView />}
+          </main>
+        </div>
+
+        {mealDraft && <MealForm initial={mealDraft} onClose={() => setMealDraft(null)} />}
+        {cooking && <CookMode recipe={cooking} onClose={() => setCookingId(null)} />}
+        {toastMsg && (
+          <div className="toast" role="status">
+            {toastMsg}
+          </div>
         )}
-        {tab === 'recipes' && (
-          <RecipesView
-            store={store}
-            onLogMeal={(recipeId) => {
-              setMealDraft({ recipeId, date: todayISO() })
-              setTab('meals')
-            }}
-          />
-        )}
-        {tab === 'insights' && <InsightsView data={store.data} />}
-      </main>
-    </div>
+      </NavContext.Provider>
+    </StoreContext.Provider>
   )
 }
