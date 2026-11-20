@@ -5,12 +5,9 @@ import {
   addDaysISO,
   capitalize,
   daysBetween,
-  eatByLabel,
   fromISODate,
   relativeDay,
-  shortDay,
   todayISO,
-  weekStartISO,
 } from '../lib/dates'
 import {
   frequentMeals,
@@ -21,6 +18,8 @@ import {
   type PantryMatch,
   type RecipeStats,
 } from '../lib/derived'
+import { buildTips, weekInsights } from '../lib/insights'
+import { TipsCard, WeekPulse } from './HomeInsights'
 import { DishImage, Stars } from './ui'
 
 const SLOT_ICONS: Record<MealType, string> = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍪' }
@@ -48,15 +47,11 @@ export function TodayView() {
   const eatenToday = todays.filter((m) => m.status === 'eaten').length
   const yesterday = data.meals.filter((m) => m.date === addDaysISO(today, -1) && m.status === 'eaten')
   const quick = frequentMeals(data, 5)
-  const toBuy = data.groceries.filter((g) => !g.checked)
-
-  const eatSoon = [...data.leftovers].sort((a, b) => a.eatBy.localeCompare(b.eatBy))
-  const expiring = data.pantry
-    .filter((p) => p.expires && daysBetween(today, p.expires) <= 3)
-    .sort((a, b) => a.expires!.localeCompare(b.expires!))
+  const leftoverCount = data.leftovers.length
 
   const streak = loggingStreak(data.meals, today)
-  const week = weekSummary(data.meals, today)
+  const week = weekInsights(data.meals, today)
+  const tips = buildTips(data, today)
   // Skip what's already on the menu for today or tomorrow
   const onMenu = new Set(
     data.meals.filter((m) => m.recipeId && m.date >= today && m.date <= addDaysISO(today, 1)).map((m) => m.recipeId),
@@ -105,7 +100,7 @@ export function TodayView() {
   const summary = [
     eatenToday ? `${eatenToday} meal${eatenToday > 1 ? 's' : ''} logged today` : 'Nothing logged yet today',
     streak > 1 && `🔥 ${streak}-day streak`,
-    eatSoon.length > 0 && `🍱 ${eatSoon.length} leftover${eatSoon.length > 1 ? 's' : ''} to eat`,
+    leftoverCount > 0 && `🍱 ${leftoverCount} leftover${leftoverCount > 1 ? 's' : ''} to eat`,
   ].filter(Boolean)
 
   const isNewUser = data.recipes.length === 0 && data.meals.length === 0
@@ -155,8 +150,8 @@ export function TodayView() {
         </div>
       )}
 
-      <div className="today-grid">
-        <div className="today-main">
+      <div className="today-meals">
+        <div>
           <div className="section-title">
             <h3>Today's meals</h3>
           </div>
@@ -244,78 +239,11 @@ export function TodayView() {
             </div>
           )}
         </div>
+      </div>
 
-        <aside className="today-side">
-          <button className="card side-card week-strip" onClick={() => nav.go('week')}>
-            <div className="side-head">
-              <strong>This week</strong>
-              <span className="muted small">Open planner ›</span>
-            </div>
-            <div className="strip">
-              {week.map((d) => (
-                <div key={d.date} className={`strip-day ${d.date === today ? 'today' : ''} ${d.date > today ? 'future' : ''}`}>
-                  <span className="strip-label">{shortDay(d.date).split(' ')[0].slice(0, 2)}</span>
-                  <span className="strip-num">{fromISODate(d.date).getDate()}</span>
-                  <span className="strip-dots">
-                    {Array.from({ length: Math.min(3, d.eaten) }, (_, i) => (
-                      <i key={`e${i}`} className="dot eaten" />
-                    ))}
-                    {Array.from({ length: Math.min(3 - Math.min(3, d.eaten), d.planned) }, (_, i) => (
-                      <i key={`p${i}`} className="dot planned" />
-                    ))}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </button>
-
-          {(eatSoon.length > 0 || expiring.length > 0) && (
-            <div className="card side-card use-up">
-              <div className="side-head">
-                <strong>⏰ Use it up</strong>
-              </div>
-              <ul className="side-list">
-                {eatSoon.map((l) => (
-                  <li key={l.id}>
-                    <DishImage photoId={null} name={l.name} className="side-thumb" />
-                    <span className="grow">
-                      {l.name}
-                      <span className="muted small"> · {l.portions} left</span>
-                    </span>
-                    <span className={`due ${l.eatBy <= today ? 'urgent' : 'soon'}`}>{eatByLabel(l.eatBy)}</span>
-                  </li>
-                ))}
-                {expiring.map((p) => (
-                  <li key={p.id}>
-                    <span className="side-thumb pantry-icon">🥫</span>
-                    <span className="grow">{p.name}</span>
-                    <span className={`due ${p.expires! <= today ? 'urgent' : 'soon'}`}>
-                      {p.expires! < today ? 'expired' : `expires ${relativeDay(p.expires!)}`}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <button className="card side-card shop-card" onClick={() => nav.go('kitchen')}>
-            <div className="side-head">
-              <strong>🛒 Shopping list</strong>
-              <span className="muted small">{toBuy.length ? `${toBuy.length} to buy ›` : 'Open ›'}</span>
-            </div>
-            {toBuy.length === 0 ? (
-              <p className="muted small">All stocked up. Plan some meals and add their ingredients in one tap.</p>
-            ) : (
-              <p className="shop-preview">
-                {toBuy
-                  .slice(0, 5)
-                  .map((g) => capitalize(g.name))
-                  .join(', ')}
-                {toBuy.length > 5 && ` +${toBuy.length - 5} more`}
-              </p>
-            )}
-          </button>
-        </aside>
+      <div className="insight-row">
+        <WeekPulse week={week} />
+        <TipsCard tips={tips} />
       </div>
 
       {ideas.length > 0 && (
@@ -346,19 +274,6 @@ export function TodayView() {
       )}
     </section>
   )
-}
-
-function weekSummary(meals: MealEntry[], today: string) {
-  const start = weekStartISO(today)
-  return Array.from({ length: 7 }, (_, i) => {
-    const date = addDaysISO(start, i)
-    const day = meals.filter((m) => m.date === date)
-    return {
-      date,
-      eaten: day.filter((m) => m.status === 'eaten').length,
-      planned: day.filter((m) => m.status === 'planned').length,
-    }
-  })
 }
 
 /** Ideas for the next meal: what the pantry covers first, then favorites and dishes not had lately. */
