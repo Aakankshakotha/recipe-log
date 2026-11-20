@@ -910,223 +910,130 @@ label.inline {
   border-radius: 999px;
 }
 
-/* This week's meals, grouped by meal type */
-.mm {
-  --label-w: 150px;
-  --gap: 6px;
-  padding: 0.9rem;
-}
-.mm-head-row,
-.mm-row {
+/* This week's meals: one simple list per meal type */
+.by-type {
   display: grid;
-  grid-template-columns: var(--label-w) minmax(0, 1fr);
-  gap: var(--gap);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
 }
-.mm-head-row {
-  grid-template-columns: var(--label-w) repeat(7, minmax(0, 1fr));
-  margin-bottom: var(--gap);
-}
-.mm-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.3rem 0;
-  border-radius: 10px;
-  color: var(--muted);
-}
-.mm-day.today {
-  background: var(--accent);
-  color: var(--accent-text);
-}
-.mm-day-name {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-}
-.mm-day-num {
-  font-weight: 700;
-  font-size: 1.05rem;
-  line-height: 1.1;
-}
-.mm-row {
+.type-list {
   --meal: var(--accent);
-  padding: var(--gap) 0;
-  border-top: 1px solid var(--border);
-}
-.mm-row.breakfast {
-  --meal: var(--breakfast);
-}
-.mm-row.lunch {
-  --meal: var(--lunch);
-}
-.mm-row.dinner {
-  --meal: var(--dinner);
-}
-.mm-row.snack {
-  --meal: var(--snack);
-}
-.mm-label {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.3rem 0.5rem 0.3rem 0.6rem;
-  border-left: 4px solid var(--meal);
-  border-radius: 3px;
-  min-width: 0;
-}
-.mm-icon {
-  font-size: 1.3rem;
-}
-.mm-label-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  min-width: 0;
-}
-.mm-row.now .now-badge {
-  background: var(--meal);
-  vertical-align: 2px;
-  margin-left: 0.2rem;
-}
-.mm-label-text .small {
-  white-space: nowrap;
-}
-.mm-row.breakfast .now-badge {
-  color: #3a2a00;
-}
-.mm-cells {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--gap);
-}
-.mm-cell {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 78px;
-  padding: 5px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid transparent;
-  min-width: 0;
-}
-.mm-cell.today {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-}
-.mm-cell.past.empty {
-  background: color-mix(in srgb, var(--surface-2) 50%, var(--surface));
-}
-.mm-cell-day {
-  display: none;
-  font-size: 0.7rem;
-  font-weight: 650;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.mm-cell.today .mm-cell-day {
-  color: var(--accent);
-}
-.mm-meal {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 4px;
+  border-top: 3px solid var(--meal);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.9rem 0.75rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
 }
-.mm-meal.planned {
-  background: transparent;
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--meal) 60%, var(--border));
+.type-list.breakfast {
+  --meal: var(--breakfast);
 }
-.mm-meal-main {
+.type-list.lunch {
+  --meal: var(--lunch);
+}
+.type-list.dinner {
+  --meal: var(--dinner);
+}
+.type-list.snack {
+  --meal: var(--snack);
+}
+.type-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.98rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+}
+.type-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+}
+.type-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.type-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.type-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.35rem 0.3rem;
+  border-radius: 8px;
   color: var(--text);
-  font-weight: 550;
+  font-weight: 500;
   text-align: left;
-  min-width: 0;
 }
-.mm-meal-main:hover:not(:disabled) {
-  background: none;
-  color: var(--accent);
+.type-item:hover:not(:disabled) {
+  background: var(--surface-2);
 }
-.mm-meal.planned .mm-meal-main {
-  color: var(--muted);
-}
-.mm-thumb {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
+.type-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   flex-shrink: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
-.mm-meal-name {
-  font-size: 0.8rem;
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.type-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.mm-stars {
-  font-size: 0.66rem;
-  color: var(--breakfast);
-  padding-left: 32px;
-  line-height: 1;
+.type-when {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
-.mm-actions {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+.type-when.today {
+  color: var(--accent);
+  font-weight: 650;
 }
-.mm-actions .small {
-  padding: 0.15rem 0.45rem;
-  font-size: 0.74rem;
+.type-list li.planned .type-name {
+  color: var(--muted);
+  font-style: italic;
+}
+.type-list li.planned .type-thumb {
+  opacity: 0.6;
+  outline: 1.5px dashed var(--meal);
+  outline-offset: 1px;
+}
+.type-empty {
+  margin: 0.2rem 0 0.4rem;
+}
+.type-add {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  align-self: flex-start;
 }
 .check-btn.small {
   width: 1.55rem;
   height: 1.55rem;
   margin: 0;
   font-size: 0.8rem;
-}
-.mm-add {
-  margin-top: auto;
-  background: none;
-  border: 1px dashed transparent;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 550;
-  padding: 0.15rem;
-  border-radius: 7px;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.mm-cell.empty .mm-add {
-  flex: 1;
-  opacity: 0.55;
-}
-.mm-cell:hover .mm-add,
-.mm-add:focus-visible {
-  opacity: 1;
-}
-.mm-add:hover:not(:disabled) {
-  background: var(--surface);
-  border-color: var(--meal);
-  color: var(--text);
-}
-.mm-legend {
-  margin: 0.6rem 0 0;
 }
 
 .quick {
@@ -2109,43 +2016,15 @@ label.inline {
 /* ---------- Phone ---------- */
 
 @media (max-width: 560px) {
+  .by-type {
+    grid-template-columns: 1fr;
+  }
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 760px) {
-  /* Meals by type: each row becomes a swipeable strip of days */
-  .mm-head-row {
-    display: none;
-  }
-  .mm-row {
-    display: block;
-    padding: 0.7rem 0;
-  }
-  .mm-label {
-    margin-bottom: 0.45rem;
-  }
-  .mm-label-text .small {
-    display: inline;
-  }
-  .mm-cells {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-  }
-  .mm-cell {
-    flex: 0 0 42%;
-    scroll-snap-align: start;
-  }
-  .mm-cell-day {
-    display: block;
-  }
-  .mm-add {
-    opacity: 0.7;
-  }
   .app {
     padding: 0 1rem calc(5.5rem + env(safe-area-inset-bottom));
   }

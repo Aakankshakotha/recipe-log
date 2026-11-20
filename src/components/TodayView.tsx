@@ -18,7 +18,7 @@ import {
 } from '../lib/derived'
 import { buildTips, weekInsights } from '../lib/insights'
 import { TipsCard, WeekPulse } from './HomeInsights'
-import { MealMatrix } from './MealMatrix'
+import { MealsByType } from './MealsByType'
 import { DishImage } from './ui'
 
 function greeting() {
@@ -151,7 +151,7 @@ export function TodayView() {
               Open planner ›
             </button>
           </div>
-          <MealMatrix now={now} />
+          <MealsByType />
 
           {quick.length > 0 && (
             <div className="quick">
