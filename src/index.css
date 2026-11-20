@@ -899,156 +899,236 @@ label.inline {
 .today-meals {
   margin-bottom: 1.5rem;
 }
-.slots {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-@media (max-width: 1000px) {
-  .slots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.slot {
-  --slot: var(--accent);
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 0.9rem 0.9rem;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  min-height: 132px;
-  overflow: hidden;
-}
-.slot::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 4px;
-  background: var(--slot);
-  opacity: 0.85;
-}
-.slot.breakfast {
-  --slot: var(--breakfast);
-}
-.slot.lunch {
-  --slot: var(--lunch);
-}
-.slot.dinner {
-  --slot: var(--dinner);
-}
-.slot.snack {
-  --slot: var(--snack);
-}
-.slot.now {
-  border-color: color-mix(in srgb, var(--slot) 60%, var(--border));
-  background: color-mix(in srgb, var(--slot) 7%, var(--surface));
-}
-.slot-head {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.slot-name {
-  font-weight: 650;
-  font-size: 0.95rem;
-}
 .now-badge {
-  background: var(--slot);
-  color: #fff;
-  font-size: 0.66rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.64rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.12rem 0.45rem;
+  padding: 0.1rem 0.42rem;
   border-radius: 999px;
 }
-.slot.breakfast .now-badge {
+
+/* This week's meals, grouped by meal type */
+.mm {
+  --label-w: 150px;
+  --gap: 6px;
+  padding: 0.9rem;
+}
+.mm-head-row,
+.mm-row {
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr);
+  gap: var(--gap);
+}
+.mm-head-row {
+  grid-template-columns: var(--label-w) repeat(7, minmax(0, 1fr));
+  margin-bottom: var(--gap);
+}
+.mm-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-radius: 10px;
+  color: var(--muted);
+}
+.mm-day.today {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.mm-day-name {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.mm-day-num {
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+.mm-row {
+  --meal: var(--accent);
+  padding: var(--gap) 0;
+  border-top: 1px solid var(--border);
+}
+.mm-row.breakfast {
+  --meal: var(--breakfast);
+}
+.mm-row.lunch {
+  --meal: var(--lunch);
+}
+.mm-row.dinner {
+  --meal: var(--dinner);
+}
+.mm-row.snack {
+  --meal: var(--snack);
+}
+.mm-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.6rem;
+  border-left: 4px solid var(--meal);
+  border-radius: 3px;
+  min-width: 0;
+}
+.mm-icon {
+  font-size: 1.3rem;
+}
+.mm-label-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+.mm-row.now .now-badge {
+  background: var(--meal);
+  vertical-align: 2px;
+  margin-left: 0.2rem;
+}
+.mm-label-text .small {
+  white-space: nowrap;
+}
+.mm-row.breakfast .now-badge {
   color: #3a2a00;
 }
-.slot-add {
-  margin-left: auto;
+.mm-cells {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--gap);
 }
-.slot-empty {
-  flex: 1;
-  width: 100%;
-  background: transparent;
-  border: 1.5px dashed var(--border);
-  color: var(--muted);
-  border-radius: var(--radius-sm);
-  font-weight: 550;
-  min-height: 64px;
-}
-.slot-empty:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--slot) 10%, transparent);
-  border-color: var(--slot);
-  color: var(--text);
-}
-.slot.now .slot-empty {
-  border-color: color-mix(in srgb, var(--slot) 55%, var(--border));
-  color: var(--text);
-}
-.slot-meals {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.mm-cell {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-.slot-meals li {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.slot-meals li.planned .slot-thumb {
-  opacity: 0.6;
-}
-.slot-meal {
-  flex: 1;
+  gap: 4px;
+  min-height: 78px;
+  padding: 5px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
   min-width: 0;
+}
+.mm-cell.today {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.mm-cell.past.empty {
+  background: color-mix(in srgb, var(--surface-2) 50%, var(--surface));
+}
+.mm-cell-day {
+  display: none;
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mm-cell.today .mm-cell-day {
+  color: var(--accent);
+}
+.mm-meal {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px;
+}
+.mm-meal.planned {
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--meal) 60%, var(--border));
+}
+.mm-meal-main {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 6px;
   background: none;
   border: none;
-  padding: 0.15rem;
+  padding: 0;
   color: var(--text);
+  font-weight: 550;
   text-align: left;
-  font-weight: normal;
-  border-radius: var(--radius-sm);
-}
-.slot-meal:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--slot) 10%, transparent);
-}
-.slot-meal-text {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
 }
-.slot-meal-text strong {
-  overflow-wrap: anywhere;
-  line-height: 1.25;
+.mm-meal-main:hover:not(:disabled) {
+  background: none;
+  color: var(--accent);
 }
-.slot-thumb {
-  width: 3.1rem;
-  height: 3.1rem;
-  border-radius: 12px;
+.mm-meal.planned .mm-meal-main {
+  color: var(--muted);
+}
+.mm-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   flex-shrink: 0;
-  font-size: 1.6rem;
+  font-size: 0.95rem;
 }
-.slot-actions {
-  /* own row under the dish, so long names never get squeezed */
-  flex-basis: 100%;
+.mm-meal-name {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.mm-stars {
+  font-size: 0.66rem;
+  color: var(--breakfast);
+  padding-left: 32px;
+  line-height: 1;
+}
+.mm-actions {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding-left: 3.6rem;
+  gap: 4px;
+  flex-wrap: wrap;
 }
+.mm-actions .small {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.74rem;
+}
+.check-btn.small {
+  width: 1.55rem;
+  height: 1.55rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+.mm-add {
+  margin-top: auto;
+  background: none;
+  border: 1px dashed transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 550;
+  padding: 0.15rem;
+  border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.mm-cell.empty .mm-add {
+  flex: 1;
+  opacity: 0.55;
+}
+.mm-cell:hover .mm-add,
+.mm-add:focus-visible {
+  opacity: 1;
+}
+.mm-add:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--meal);
+  color: var(--text);
+}
+.mm-legend {
+  margin: 0.6rem 0 0;
+}
+
 .quick {
   display: flex;
   align-items: center;
@@ -2029,21 +2109,43 @@ label.inline {
 /* ---------- Phone ---------- */
 
 @media (max-width: 560px) {
-  .slots {
-    grid-template-columns: 1fr;
-  }
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .slot {
-    min-height: 0;
-  }
-  .slot-empty {
-    min-height: 44px;
   }
 }
 
 @media (max-width: 760px) {
+  /* Meals by type: each row becomes a swipeable strip of days */
+  .mm-head-row {
+    display: none;
+  }
+  .mm-row {
+    display: block;
+    padding: 0.7rem 0;
+  }
+  .mm-label {
+    margin-bottom: 0.45rem;
+  }
+  .mm-label-text .small {
+    display: inline;
+  }
+  .mm-cells {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .mm-cell {
+    flex: 0 0 42%;
+    scroll-snap-align: start;
+  }
+  .mm-cell-day {
+    display: block;
+  }
+  .mm-add {
+    opacity: 0.7;
+  }
   .app {
     padding: 0 1rem calc(5.5rem + env(safe-area-inset-bottom));
   }

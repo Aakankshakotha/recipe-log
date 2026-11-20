@@ -1,9 +1,8 @@
-import { MEAL_TYPES, type MealEntry, type MealType, type Recipe } from '../types'
+import type { MealType, Recipe } from '../types'
 import { newId, useStore } from '../store'
 import { useNav } from '../nav'
 import {
   addDaysISO,
-  capitalize,
   daysBetween,
   fromISODate,
   relativeDay,
@@ -12,7 +11,6 @@ import {
 import {
   frequentMeals,
   loggingStreak,
-  mealTitle,
   usePantryMatches,
   useRecipeStats,
   type PantryMatch,
@@ -20,9 +18,8 @@ import {
 } from '../lib/derived'
 import { buildTips, weekInsights } from '../lib/insights'
 import { TipsCard, WeekPulse } from './HomeInsights'
-import { DishImage, Stars } from './ui'
-
-const SLOT_ICONS: Record<MealType, string> = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍪' }
+import { MealMatrix } from './MealMatrix'
+import { DishImage } from './ui'
 
 function greeting() {
   const h = new Date().getHours()
@@ -91,11 +88,7 @@ export function TodayView() {
     nav.toast('Copied yesterday’s meals')
   }
 
-  const markEaten = (m: MealEntry) => {
-    if (m.leftoverId) store.takeLeftoverPortion(m.leftoverId)
-    store.upsert('meals', { ...m, status: 'eaten' })
-    nav.toast('Enjoy! Tap the meal to rate it')
-  }
+
 
   const summary = [
     eatenToday ? `${eatenToday} meal${eatenToday > 1 ? 's' : ''} logged today` : 'Nothing logged yet today',
@@ -153,78 +146,12 @@ export function TodayView() {
       <div className="today-meals">
         <div>
           <div className="section-title">
-            <h3>Today's meals</h3>
+            <h3>This week's meals</h3>
+            <button className="link small" onClick={() => nav.go('week')}>
+              Open planner ›
+            </button>
           </div>
-          <div className="slots">
-            {MEAL_TYPES.map((type) => {
-              const meals = todays.filter((m) => m.mealType === type)
-              return (
-                <div key={type} className={`slot ${type} ${type === now ? 'now' : ''} ${meals.length ? 'filled' : ''}`}>
-                  <div className="slot-head">
-                    <span className="slot-name">
-                      <span aria-hidden>{SLOT_ICONS[type]}</span> {capitalize(type)}
-                    </span>
-                    {type === now && <span className="now-badge">Now</span>}
-                    {meals.length > 0 && (
-                      <button
-                        className="icon-btn small slot-add"
-                        onClick={() => nav.editMeal({ date: today, mealType: type })}
-                        aria-label={`Add another ${type}`}
-                      >
-                        +
-                      </button>
-                    )}
-                  </div>
-                  {meals.length === 0 ? (
-                    <button className="slot-empty" onClick={() => nav.editMeal({ date: today, mealType: type })}>
-                      + Add {type}
-                    </button>
-                  ) : (
-                    <ul className="slot-meals">
-                      {meals.map((m) => {
-                        const recipe = data.recipes.find((r) => r.id === m.recipeId)
-                        const title = mealTitle(m, data)
-                        return (
-                          <li key={m.id} className={m.status}>
-                            <button className="slot-meal" onClick={() => nav.editMeal(m)}>
-                              <DishImage
-                                photoId={m.photoId ?? recipe?.photoId}
-                                name={title}
-                                category={recipe?.category}
-                                className="slot-thumb"
-                              />
-                              <span className="slot-meal-text">
-                                <strong>{title}</strong>
-                                {m.status === 'planned' ? (
-                                  <span className="muted small">Planned</span>
-                                ) : m.rating ? (
-                                  <Stars value={m.rating} size="sm" />
-                                ) : (
-                                  <span className="muted small">Tap to rate</span>
-                                )}
-                              </span>
-                            </button>
-                            {m.status === 'planned' && (
-                              <div className="slot-actions">
-                                {m.recipeId && (
-                                  <button className="ghost small" onClick={() => nav.cook(m.recipeId!)}>
-                                    👩‍🍳 Cook
-                                  </button>
-                                )}
-                                <button className="check-btn" onClick={() => markEaten(m)} title="Mark as eaten">
-                                  ✓
-                                </button>
-                              </div>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <MealMatrix now={now} />
 
           {quick.length > 0 && (
             <div className="quick">
