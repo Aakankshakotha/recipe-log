@@ -1,4 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import {
+  BookOpen,
+  CalendarDays,
+  ChartColumn,
+  CookingPot,
+  House,
+  Settings,
+  ShoppingBasket,
+  type LucideIcon,
+} from 'lucide-react'
 import { StoreContext, useAppData } from './store'
 import { NavContext, type Nav, type Tab } from './nav'
 import type { MealEntry } from './types'
@@ -11,13 +21,13 @@ import { SettingsView } from './components/SettingsView'
 import { MealForm } from './components/MealForm'
 import { CookMode } from './components/CookMode'
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'today', label: 'Today', icon: '🏠' },
-  { id: 'week', label: 'Week', icon: '📅' },
-  { id: 'recipes', label: 'Recipes', icon: '📖' },
-  { id: 'kitchen', label: 'Kitchen', icon: '🛒' },
-  { id: 'insights', label: 'Insights', icon: '📊' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
+const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
+  { id: 'today', label: 'Home', icon: House },
+  { id: 'week', label: 'Planner', icon: CalendarDays },
+  { id: 'recipes', label: 'Recipes', icon: BookOpen },
+  { id: 'kitchen', label: 'Kitchen', icon: ShoppingBasket },
+  { id: 'insights', label: 'Insights', icon: ChartColumn },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
 export default function App() {
@@ -63,7 +73,9 @@ export default function App() {
         <div className="app">
           <header className="header">
             <button className="brand" onClick={() => go('today')}>
-              <span className="brand-icon">🍲</span>
+              <span className="brand-icon" aria-hidden>
+                <CookingPot size={18} strokeWidth={2.2} />
+              </span>
               <span>Recipe Log</span>
             </button>
             <nav className="tabs" aria-label="Main">
@@ -74,14 +86,21 @@ export default function App() {
                   onClick={() => go(t.id)}
                   aria-current={tab === t.id ? 'page' : undefined}
                 >
-                  <span className="tab-icon" aria-hidden>
-                    {t.icon}
-                  </span>
+                  <t.icon className="tab-icon" size={20} strokeWidth={tab === t.id ? 2.2 : 1.8} aria-hidden />
                   <span className="tab-label">{t.label}</span>
                   {t.id === 'kitchen' && unchecked > 0 && <span className="badge">{unchecked}</span>}
                 </button>
               ))}
             </nav>
+            <button className="profile" onClick={() => go('settings')}>
+              <span className="avatar" aria-hidden>
+                {(store.data.settings.name.trim() || 'You').charAt(0).toUpperCase()}
+              </span>
+              <span className="profile-text">
+                <strong>{store.data.settings.name.trim() || 'Add your name'}</strong>
+                <span>{store.data.meals.filter((m) => m.status === 'eaten').length} meals logged</span>
+              </span>
+            </button>
           </header>
 
           <main key={tab} className="view">

@@ -1,3 +1,4 @@
+import { CalendarPlus, Check, ChefHat, ShoppingBasket, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import type { Recipe } from '../types'
 import { itemKey, newId, useStore } from '../store'
@@ -73,7 +74,7 @@ export function RecipeDetail({ recipe, onBack, onEdit }: Props) {
           <div className="muted">
             {[
               recipe.category,
-              recipe.prepMinutes != null && `⏱ ${recipe.prepMinutes} min`,
+              recipe.prepMinutes != null && `${recipe.prepMinutes} min`,
               stats ? `cooked ${stats.timesCooked}×, last ${formatDate(stats.lastCooked!)}` : 'not cooked yet',
               stats?.avgRating != null && `★ ${stats.avgRating.toFixed(1)}`,
             ]
@@ -91,20 +92,22 @@ export function RecipeDetail({ recipe, onBack, onEdit }: Props) {
           )}
           {warnings.length > 0 && (
             <p className="warning">
-              ⚠️ {warnings.map((w) => `${w.member.name} avoids ${w.matched.join(', ')}`).join(' · ')}
+              <TriangleAlert size={16} aria-hidden /> {warnings.map((w) => `${w.member.name} avoids ${w.matched.join(', ')}`).join(' · ')}
             </p>
           )}
 
           <div className="primary-actions">
-            <button onClick={() => nav.cook(recipe.id)}>👩‍🍳 Start cooking</button>
+            <button onClick={() => nav.cook(recipe.id)}>
+              <ChefHat size={17} aria-hidden /> Start cooking
+            </button>
             <button className="ghost" onClick={() => nav.editMeal({ recipeId: recipe.id, status: 'planned' })}>
-              🗓 Plan
+              <CalendarPlus size={16} aria-hidden /> Plan
             </button>
             <button className="ghost" onClick={() => nav.editMeal({ recipeId: recipe.id, status: 'eaten', date: todayISO() })}>
-              ✓ Log eaten
+              <Check size={16} aria-hidden /> Log eaten
             </button>
             <button className="ghost" onClick={shop} disabled={!recipe.ingredients.length}>
-              🛒 Add to list
+              <ShoppingBasket size={16} aria-hidden /> Add to list
             </button>
           </div>
 

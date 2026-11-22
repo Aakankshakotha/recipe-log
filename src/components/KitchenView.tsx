@@ -1,3 +1,4 @@
+import { Check, Package, Refrigerator, Share2, ShoppingBasket } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { GroceryItem, GrocerySection, PantryItem } from '../types'
 import { newId, useStore } from '../store'
@@ -33,9 +34,9 @@ export function KitchenView() {
           value={sub}
           onChange={setSub}
           options={[
-            { value: 'shopping', label: `🛒 Shopping${unchecked ? ` (${unchecked})` : ''}` },
-            { value: 'pantry', label: `🥫 Pantry (${data.pantry.length})` },
-            { value: 'leftovers', label: `🍱 Leftovers (${data.leftovers.length})` },
+            { value: 'shopping', label: `Shopping list${unchecked ? ` · ${unchecked}` : ''}` },
+            { value: 'pantry', label: `Pantry · ${data.pantry.length}` },
+            { value: 'leftovers', label: `Leftovers · ${data.leftovers.length}` },
           ]}
         />
       </div>
@@ -96,11 +97,11 @@ function Shopping() {
         </button>
       </form>
       <p className="muted small">
-        Tip: plan meals in the Week tab, then press “🛒 Shop for plan” to fill this list automatically.
+        Tip: plan meals in the Planner, then press “Shop for plan” to fill this list automatically.
       </p>
 
       {data.groceries.length === 0 ? (
-        <Empty icon="🛒" title="Your shopping list is empty" />
+        <Empty icon={<ShoppingBasket size={28} />} title="Your shopping list is empty" />
       ) : (
         <>
           {groupBySection(open).map(([section, items]) => (
@@ -126,7 +127,7 @@ function Shopping() {
           <div className="actions">
             {open.length > 0 && (
               <button className="ghost small" onClick={share}>
-                ↗ Share list
+                <Share2 size={15} aria-hidden /> Share list
               </button>
             )}
             {checked.length > 0 && (
@@ -141,7 +142,7 @@ function Shopping() {
                     nav.toast(`Moved ${checked.length} items to the pantry`)
                   }}
                 >
-                  ✓ Done shopping → pantry
+                  <Check size={15} aria-hidden /> Done shopping, move to pantry
                 </button>
               </>
             )}
@@ -222,7 +223,7 @@ function Pantry() {
         <input className="search" type="search" placeholder="Filter pantry…" value={filter} onChange={(e) => setFilter(e.target.value)} />
       )}
       {data.pantry.length === 0 ? (
-        <Empty icon="🥫" title="Pantry is empty">
+        <Empty icon={<Refrigerator size={28} />} title="Pantry is empty">
           <p className="muted">Add what's in your fridge and cupboards, or tick items off the shopping list.</p>
         </Empty>
       ) : (
@@ -318,7 +319,7 @@ function Leftovers() {
         automatically with a 3-day “eat by” date.
       </p>
       {sorted.length === 0 ? (
-        <Empty icon="🍱" title="No leftovers" />
+        <Empty icon={<Package size={28} />} title="No leftovers" />
       ) : (
         <ul className="list">
           {sorted.map((l) => {

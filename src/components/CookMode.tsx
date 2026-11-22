@@ -1,3 +1,4 @@
+import { Timer, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Recipe } from '../types'
 import { todayISO } from '../lib/dates'
@@ -129,7 +130,7 @@ export function CookMode({ recipe, onClose }: { recipe: Recipe; onClose: () => v
             onClick={() => setSpeak(!speak)}
             title={speak ? 'Stop reading steps aloud' : 'Read steps aloud'}
           >
-            {speak ? '🔊' : '🔈'}
+            {speak ? <Volume2 size={20} aria-hidden /> : <VolumeX size={20} aria-hidden />}
           </button>
         )}
       </header>
@@ -169,7 +170,7 @@ export function CookMode({ recipe, onClose }: { recipe: Recipe; onClose: () => v
             <div className="chips center">
               {findDurations(current!).map((d, i) => (
                 <button key={i} className="chip timer-chip" onClick={() => startTimer(`Step ${step + 1}: ${d.label}`, d.seconds)}>
-                  ⏲ Start {d.label} timer
+                  <Timer size={17} aria-hidden /> Start {d.label} timer
                 </button>
               ))}
             </div>

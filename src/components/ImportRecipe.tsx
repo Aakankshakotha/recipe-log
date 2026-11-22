@@ -1,3 +1,4 @@
+import { Sparkles } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { Recipe } from '../types'
 import { useStore } from '../store'
@@ -84,8 +85,8 @@ export function ImportRecipe({ onClose, onImported }: Props) {
             setError('')
           }}
           options={[
-            { value: 'photo', label: '📷 From a photo' },
-            { value: 'text', label: '📋 From text' },
+            { value: 'photo', label: 'From a photo' },
+            { value: 'text', label: 'From text' },
           ]}
         />
         {mode === 'photo' ? (
@@ -123,7 +124,8 @@ export function ImportRecipe({ onClose, onImported }: Props) {
             Cancel
           </button>
           <button type="button" onClick={run} disabled={!ready || busy}>
-            {busy ? 'Reading recipe…' : '✨ Import'}
+            {!busy && <Sparkles size={15} aria-hidden />}
+            {busy ? 'Reading recipe…' : 'Import'}
           </button>
         </div>
         <p className="muted small">You'll be able to check and edit everything before saving.</p>

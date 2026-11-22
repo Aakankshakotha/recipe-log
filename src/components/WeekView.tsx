@@ -1,3 +1,4 @@
+import { Copy, LayoutTemplate, ShoppingBasket } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { MEAL_TYPES, type MealEntry, type MealType, type TemplateMeal } from '../types'
 import { newId, useStore } from '../store'
@@ -155,13 +156,13 @@ export function WeekView() {
         </div>
         <div className="toolbar-actions">
           <button className="ghost small" onClick={copyLastWeek}>
-            ⧉ Copy last week
+            <Copy size={15} aria-hidden /> Copy last week
           </button>
           <button className="ghost small" onClick={() => setTemplatesOpen(true)}>
-            ☰ Templates
+            <LayoutTemplate size={15} aria-hidden /> Templates
           </button>
           <button className="ghost small" onClick={shopForWeek} disabled={!plannedAhead.length}>
-            🛒 Shop for plan
+            <ShoppingBasket size={15} aria-hidden /> Shop for plan
           </button>
           <button onClick={() => nav.editMeal({ date: today >= weekStart && today <= weekEnd ? today : weekStart })}>
             + Add meal

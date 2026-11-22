@@ -75,9 +75,20 @@ export type TipAction =
   | { kind: 'plan'; date: string; label: string }
   | { kind: 'tab'; tab: 'kitchen' | 'week' | 'insights'; label: string }
 
+export type TipIcon =
+  | 'leftover'
+  | 'expiring'
+  | 'milestone'
+  | 'variety'
+  | 'plan'
+  | 'favorite'
+  | 'progress'
+  | 'untried'
+  | 'shopping'
+
 export interface Tip {
   id: string
-  icon: string
+  icon: TipIcon
   tone: 'urgent' | 'nudge' | 'praise'
   title: string
   detail?: string
@@ -106,7 +117,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
     if (left > 1) continue
     tips.push({
       id: 'leftover-' + l.id,
-      icon: '🍱',
+      icon: 'leftover',
       tone: 'urgent',
       title: left < 0 ? `${l.name} leftovers are past their date` : `Eat the ${l.name} leftovers ${left === 0 ? 'today' : 'by tomorrow'}`,
       detail: `${l.portions} portion${l.portions > 1 ? 's' : ''} left`,
@@ -123,7 +134,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
     const uses = data.recipes.find((r) => r.ingredients.some((line) => sameIngredient(key, parseIngredient(line).key)))
     tips.push({
       id: 'expiring-' + p.id,
-      icon: '⏰',
+      icon: 'expiring',
       tone: 'urgent',
       title:
         left < 0
@@ -138,7 +149,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
   const total = eaten.length
   const milestone = MILESTONES.find((n) => total >= n && total < n + 3)
   if (milestone) {
-    tips.push({ id: 'milestone', icon: '🏆', tone: 'praise', title: `You've logged ${milestone} meals!`, detail: 'Nice habit — keep it going.' })
+    tips.push({ id: 'milestone', icon: 'milestone', tone: 'praise', title: `You've logged ${milestone} meals!`, detail: 'Nice habit — keep it going.' })
   }
 
   // 4. Variety: one category dominating the last 7 days
@@ -155,7 +166,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
       .sort((a, b) => (lastCooked.get(a.id) ?? '').localeCompare(lastCooked.get(b.id) ?? ''))[0]
     tips.push({
       id: 'variety',
-      icon: '🌈',
+      icon: 'variety',
       tone: 'nudge',
       title: `${topCat} ${topCount} times this week`,
       detail: alt ? `Mix it up with ${alt.name}?` : 'Try something different next.',
@@ -168,7 +179,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
   if (data.recipes.length > 0 && !data.meals.some((m) => m.date === tomorrow)) {
     tips.push({
       id: 'plan-tomorrow',
-      icon: '🗓',
+      icon: 'plan',
       tone: 'nudge',
       title: 'Nothing planned for tomorrow',
       detail: 'Planning ahead makes shopping one tap.',
@@ -184,7 +195,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
     const weeks = Math.floor(daysBetween(lastCooked.get(missed.id)!, today) / 7)
     tips.push({
       id: 'missed-' + missed.id,
-      icon: '💛',
+      icon: 'favorite',
       tone: 'nudge',
       title: `You haven't had ${missed.name} in ${weeks} weeks`,
       detail: `A favorite — last made ${formatDate(lastCooked.get(missed.id)!)}`,
@@ -200,7 +211,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
   if (nowHome >= 3 && nowHome > thenHome) {
     tips.push({
       id: 'progress',
-      icon: '👏',
+      icon: 'progress',
       tone: 'praise',
       title: `${nowHome} meals from your recipes this week`,
       detail: thenHome ? `${nowHome - thenHome} more than this time last week` : 'Up from none last week',
@@ -213,7 +224,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
   if (untried) {
     tips.push({
       id: 'untried-' + untried.id,
-      icon: '✨',
+      icon: 'untried',
       tone: 'nudge',
       title: `Still haven't tried ${untried.name}`,
       detail: untried.prepMinutes ? `Takes about ${untried.prepMinutes} min` : 'Saved a while ago',
@@ -226,7 +237,7 @@ export function buildTips(data: AppData, today: string, limit = 4): Tip[] {
   if (toBuy > 0) {
     tips.push({
       id: 'shopping',
-      icon: '🛒',
+      icon: 'shopping',
       tone: 'nudge',
       title: `${toBuy} item${toBuy > 1 ? 's' : ''} on your shopping list`,
       action: { kind: 'tab', tab: 'kitchen', label: 'Open list' },

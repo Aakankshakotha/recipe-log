@@ -2,7 +2,20 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../nav'
 import { fromISODate, formatDate, todayISO } from '../lib/dates'
-import type { DayBar, Tip, WeekInsights, WeekStat } from '../lib/insights'
+import {
+  CalendarPlus,
+  ChevronRight,
+  Clock,
+  Heart,
+  Refrigerator,
+  ShoppingBasket,
+  Shuffle,
+  Sparkles,
+  TrendingUp,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react'
+import type { DayBar, Tip, TipIcon, WeekInsights, WeekStat } from '../lib/insights'
 
 // ---- "Your week": four stat tiles + meals-per-day chart ----
 
@@ -16,7 +29,7 @@ function Delta({ stat, unit = '' }: { stat: WeekStat; unit?: string }) {
     <span className={`delta ${up ? 'up' : 'down'}`}>
       <span aria-hidden>{up ? '▲' : '▼'}</span>
       <span className="sr-only">{up ? 'up' : 'down'}</span> {Math.abs(diff)}
-      {unit} vs last week
+      {unit} vs last wk
     </span>
   )
 }
@@ -127,20 +140,16 @@ function WeekChart({ days }: { days: DayBar[] }) {
 }
 
 export function WeekPulse({ week }: { week: WeekInsights }) {
-  const nav = useNav()
   return (
     <div className="card pulse">
       <div className="card-head">
-        <h3>Your week so far</h3>
-        <button className="link small" onClick={() => nav.go('insights')}>
-          All insights ›
-        </button>
+        <h2>Your week so far</h2>
       </div>
       <div className="stats">
-        <StatTile label="Meals logged" value={String(week.meals.value)} stat={week.meals} />
-        <StatTile label="From your recipes" value={`${week.recipeShare.value}%`} stat={week.recipeShare} unit=" pts" />
-        <StatTile label="Different dishes" value={String(week.dishes.value)} stat={week.dishes} />
-        <StatTile label="Leftovers eaten" value={String(week.leftovers.value)} stat={week.leftovers} />
+        <StatTile label="Meals" value={String(week.meals.value)} stat={week.meals} />
+        <StatTile label="Home recipes" value={`${week.recipeShare.value}%`} stat={week.recipeShare} unit=" pts" />
+        <StatTile label="Dishes" value={String(week.dishes.value)} stat={week.dishes} />
+        <StatTile label="Leftovers" value={String(week.leftovers.value)} stat={week.leftovers} />
       </div>
       <WeekChart days={week.days} />
     </div>
@@ -148,6 +157,27 @@ export function WeekPulse({ week }: { week: WeekInsights }) {
 }
 
 // ---- "For you": tips ----
+
+const TIP_ICONS: Record<TipIcon, LucideIcon> = {
+  leftover: Refrigerator,
+  expiring: Clock,
+  milestone: Trophy,
+  variety: Shuffle,
+  plan: CalendarPlus,
+  favorite: Heart,
+  progress: TrendingUp,
+  untried: Sparkles,
+  shopping: ShoppingBasket,
+}
+
+function TipGlyph({ icon }: { icon: TipIcon }) {
+  const Icon = TIP_ICONS[icon]
+  return (
+    <span className="tip-icon" aria-hidden>
+      <Icon size={18} strokeWidth={2} />
+    </span>
+  )
+}
 
 export function TipsCard({ tips }: { tips: Tip[] }) {
   const { data } = useStore()
@@ -165,7 +195,7 @@ export function TipsCard({ tips }: { tips: Tip[] }) {
   return (
     <div className="card tips">
       <div className="card-head">
-        <h3>For you</h3>
+        <h2>For you</h2>
       </div>
       {tips.length === 0 ? (
         <p className="muted small">
@@ -177,16 +207,14 @@ export function TipsCard({ tips }: { tips: Tip[] }) {
         <ul className="tip-list">
           {tips.map((t) => (
             <li key={t.id} className={`tip ${t.tone}`}>
-              <span className="tip-icon" aria-hidden>
-                {t.icon}
-              </span>
+              <TipGlyph icon={t.icon} />
               <span className="tip-text">
                 <strong>{t.title}</strong>
                 {t.detail && <span className="muted small">{t.detail}</span>}
               </span>
               {t.action && (
-                <button className="ghost small tip-action" onClick={() => run(t)}>
-                  {t.action.label}
+                <button className="link small tip-action" onClick={() => run(t)}>
+                  {t.action.label} <ChevronRight size={14} aria-hidden />
                 </button>
               )}
             </li>

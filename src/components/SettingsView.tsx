@@ -1,3 +1,4 @@
+import { Download, HardDrive, Palette, Repeat, Sparkles, Upload, Users } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { MEAL_TYPES, type MealType, type Member, type Theme } from '../types'
 import { exportBackup, newId, readBackup, useStore } from '../store'
@@ -8,10 +9,10 @@ import { ListInput, Segmented } from './ui'
 export function SettingsView() {
   return (
     <section className="settings">
+      <Appearance />
       <Family />
       <Recurring />
       <AiSettings />
-      <Appearance />
       <Backup />
     </section>
   )
@@ -21,14 +22,24 @@ function Appearance() {
   const store = useStore()
   return (
     <div className="card">
-      <h3>Appearance</h3>
+      <h3 className="settings-title">
+        <Palette size={18} aria-hidden /> You & appearance
+      </h3>
+      <label className="field-row">
+        <span>Your name</span>
+        <input
+          value={store.data.settings.name}
+          onChange={(e) => store.updateSettings({ name: e.target.value })}
+          placeholder="Shown in the greeting on Home"
+        />
+      </label>
       <Segmented<Theme>
         value={store.data.settings.theme}
         onChange={(theme) => store.updateSettings({ theme })}
         options={[
           { value: 'system', label: 'Auto' },
-          { value: 'light', label: '☀️ Light' },
-          { value: 'dark', label: '🌙 Dark' },
+          { value: 'light', label: 'Light' },
+          { value: 'dark', label: 'Dark' },
         ]}
       />
     </div>
@@ -48,7 +59,9 @@ function Family() {
 
   return (
     <div className="card">
-      <h3>👨‍👩‍👧 Family</h3>
+      <h3 className="settings-title">
+        <Users size={18} aria-hidden /> Family
+      </h3>
       <p className="muted small">
         Add who you cook for and what each person can't or won't eat. You'll get a warning on recipes and meals
         that contain those foods. Group words work too: <em>nuts, dairy, gluten, egg, shellfish, meat, non-veg,
@@ -124,7 +137,9 @@ function Recurring() {
 
   return (
     <div className="card">
-      <h3>↻ Recurring meals</h3>
+      <h3 className="settings-title">
+        <Repeat size={18} aria-hidden /> Recurring meals
+      </h3>
       <p className="muted small">
         Regular things like “Friday = pizza night”. They appear as suggestions on the Week tab — one tap adds them.
       </p>
@@ -187,7 +202,9 @@ function AiSettings() {
 
   return (
     <div className="card">
-      <h3>✨ AI recipe import</h3>
+      <h3 className="settings-title">
+        <Sparkles size={18} aria-hidden /> AI recipe import
+      </h3>
       <p className="muted small">
         Turn a photo of a cookbook page, a handwritten card or pasted text into a recipe. Uses Claude with your own
         Anthropic API key (get one at{' '}
@@ -244,7 +261,9 @@ function Backup() {
 
   return (
     <div className="card">
-      <h3>💾 Backup</h3>
+      <h3 className="settings-title">
+        <HardDrive size={18} aria-hidden /> Backup
+      </h3>
       <p className="muted small">
         Everything is saved in this browser only ({recipes.length} recipes, {meals.length} meals). Download a backup
         now and then — it includes photos — and use it to restore or move to another device.
@@ -259,10 +278,10 @@ function Backup() {
             setBusy(false)
           }}
         >
-          ⬇ Download backup
+          <Download size={15} aria-hidden /> Download backup
         </button>
         <button className="ghost" disabled={busy} onClick={() => input.current?.click()}>
-          ⬆ Restore from file
+          <Upload size={15} aria-hidden /> Restore from file
         </button>
         <input
           ref={input}

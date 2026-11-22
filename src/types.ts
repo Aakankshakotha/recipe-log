@@ -108,6 +108,7 @@ export interface WeekTemplate {
 export type Theme = 'system' | 'light' | 'dark'
 
 export interface Settings {
+  name: string
   theme: Theme
   anthropicApiKey: string
 }

@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { MEAL_TYPES, type MealEntry, type MealStatus, type MealType } from '../types'
 import { itemKey, newId, useStore } from '../store'
@@ -121,8 +122,8 @@ export function MealForm({ initial, onClose }: Props) {
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'planned', label: '🗓 Planned' },
-            { value: 'eaten', label: '✓ Eaten' },
+            { value: 'planned', label: 'Planned' },
+            { value: 'eaten', label: 'Eaten' },
           ]}
         />
         <div className="row">
@@ -215,7 +216,8 @@ export function MealForm({ initial, onClose }: Props) {
             </div>
           </div>
         )}
-        {warnings.length > 0 && <p className="warning">⚠️ Contains foods to avoid — {describeWarnings(warnings)}</p>}
+        {warnings.length > 0 && <p className="warning">
+            <TriangleAlert size={15} aria-hidden /> Contains foods to avoid — {describeWarnings(warnings)}</p>}
 
         {status === 'eaten' && (
           <>

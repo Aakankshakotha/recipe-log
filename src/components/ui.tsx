@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createElement, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Camera, X } from 'lucide-react'
 import { deleteImage, resizeImage, saveImage, useImageURL } from '../lib/images'
-import { foodEmoji, foodTint } from '../lib/food'
+import { foodIcon, foodTint } from '../lib/food'
 
 export function Modal({
   title,
@@ -29,7 +30,7 @@ export function Modal({
         <div className="modal-head">
           <h2>{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
-            ✕
+            <X size={18} />
           </button>
         </div>
         <div className="modal-body">{children}</div>
@@ -58,13 +59,14 @@ export function DishImage({
 }) {
   const url = useImageURL(photoId)
   if (url) return <img src={url} alt="" className={`dish-img ${className ?? ''}`} loading="lazy" />
+  const tint = foodTint(name)
   return (
     <div
-      className={`dish-img dish-emoji ${className ?? ''}`}
-      style={{ '--tint': foodTint(name) } as CSSProperties}
+      className={`dish-img dish-icon ${className ?? ''}`}
+      style={{ '--tint': tint.bg, '--ink': tint.ink } as CSSProperties}
       aria-hidden
     >
-      <span>{foodEmoji(name, category)}</span>
+      {createElement(foodIcon(name, category), { strokeWidth: 1.6 })}
     </div>
   )
 }
@@ -100,7 +102,8 @@ export function PhotoPicker({
       {photoId && <Photo id={photoId} alt="" className="photo-preview" />}
       <div className="photo-picker-actions">
         <button type="button" className="ghost small" onClick={() => input.current?.click()} disabled={busy}>
-          {busy ? 'Saving…' : photoId ? 'Change photo' : `📷 ${label}`}
+          {!busy && !photoId && <Camera size={15} aria-hidden />}
+          {busy ? 'Saving…' : photoId ? 'Change photo' : label}
         </button>
         {photoId && (
           <button
@@ -164,7 +167,7 @@ export function Segmented<T extends string>({
   onChange,
 }: {
   value: T
-  options: { value: T; label: string }[]
+  options: { value: T; label: ReactNode }[]
   onChange: (v: T) => void
 }) {
   return (
@@ -185,7 +188,7 @@ export function Segmented<T extends string>({
   )
 }
 
-export function Empty({ icon, title, children }: { icon: string; title: string; children?: ReactNode }) {
+export function Empty({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
     <div className="empty">
       <div className="empty-icon">{icon}</div>

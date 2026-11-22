@@ -24,7 +24,7 @@ const STORAGE_KEY = 'recipe-log:v1'
 
 export const newId = () => crypto.randomUUID()
 
-const DEFAULT_SETTINGS: Settings = { theme: 'system', anthropicApiKey: '' }
+const DEFAULT_SETTINGS: Settings = { name: '', theme: 'system', anthropicApiKey: '' }
 
 /** Fills in fields added since older versions, so old saves and backups keep working. */
 type Saved<T> = { [K in keyof T]?: T[K] extends (infer U)[] ? Partial<U>[] : T[K] }
@@ -32,9 +32,38 @@ type Saved<T> = { [K in keyof T]?: T[K] extends (infer U)[] ? Partial<U>[] : T[K
 export function normalize(raw: Saved<AppData> | null | undefined): AppData {
   const r = raw ?? {}
   return {
-    recipes: (r.recipes ?? []).map((x) => ({ photoId: null, journal: [], tags: [], ...x }) as Recipe),
+    recipes: (r.recipes ?? []).map(
+      (x) =>
+        ({
+          name: 'Untitled recipe',
+          category: '',
+          prepMinutes: null,
+          servings: null,
+          ingredients: [],
+          steps: [],
+          notes: '',
+          tags: [],
+          favorite: false,
+          photoId: null,
+          journal: [],
+          createdAt: new Date().toISOString(),
+          ...x,
+        }) as Recipe,
+    ),
     meals: (r.meals ?? []).map(
-      (x) => ({ status: 'eaten', leftoverId: null, photoId: null, eatenBy: [], ...x }) as MealEntry,
+      (x) =>
+        ({
+          mealType: 'dinner',
+          status: 'eaten',
+          recipeId: null,
+          leftoverId: null,
+          description: '',
+          rating: null,
+          notes: '',
+          photoId: null,
+          eatenBy: [],
+          ...x,
+        }) as MealEntry,
     ),
     members: (r.members ?? []) as AppData['members'],
     groceries: (r.groceries ?? []) as AppData['groceries'],

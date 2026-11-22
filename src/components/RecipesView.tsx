@@ -1,3 +1,4 @@
+import { BookOpen, Plus, Search, Shuffle, Sparkles, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { Recipe } from '../types'
 import { useStore } from '../store'
@@ -105,13 +106,15 @@ export function RecipesView({ openId, setOpenId }: Props) {
         <div className="toolbar-actions">
           {data.recipes.length > 1 && (
             <button className="ghost small" onClick={surpriseMe} title="Pick something for me">
-              🎲 Surprise me
+              <Shuffle size={15} aria-hidden /> Surprise me
             </button>
           )}
           <button className="ghost small" onClick={() => setImporting(true)}>
-            ✨ Import
+            <Sparkles size={15} aria-hidden /> Import
           </button>
-          <button onClick={() => setEditing({})}>+ Add recipe</button>
+          <button onClick={() => setEditing({})}>
+            <Plus size={17} aria-hidden /> Add recipe
+          </button>
         </div>
       </div>
       {data.recipes.length > 0 && (
@@ -149,17 +152,17 @@ export function RecipesView({ openId, setOpenId }: Props) {
       </datalist>
 
       {data.recipes.length === 0 ? (
-        <Empty icon="📖" title="No recipes yet">
+        <Empty icon={<BookOpen size={28} />} title="No recipes yet">
           <p className="muted">Type one in, or snap a photo of a cookbook page to import it.</p>
           <div className="row-actions center">
             <button onClick={() => setEditing({})}>Add a recipe</button>
             <button className="ghost" onClick={() => setImporting(true)}>
-              ✨ Import from photo or text
+              <Sparkles size={15} aria-hidden /> Import from photo or text
             </button>
           </div>
         </Empty>
       ) : filtered.length === 0 ? (
-        <Empty icon="🔍" title="No recipes match your filters" />
+        <Empty icon={<Search size={28} />} title="No recipes match your filters" />
       ) : (
         <ul className="grid">
           {filtered.map((r) => {
@@ -189,7 +192,7 @@ export function RecipesView({ openId, setOpenId }: Props) {
                       )}
                       {warn.length > 0 && (
                         <span className="tag warn" title={warn.map((w) => w.member.name).join(', ')}>
-                          ⚠️ {warn.map((w) => w.member.name).join(', ')}
+                          <TriangleAlert size={12} aria-hidden /> {warn.map((w) => w.member.name).join(', ')}
                         </span>
                       )}
                       {r.tags.slice(0, 3).map((t) => (

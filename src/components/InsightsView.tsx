@@ -1,8 +1,11 @@
+import { ChartColumn } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../nav'
 import { addDaysISO, daysAgoISO, formatDate, todayISO, weekStartISO } from '../lib/dates'
 import { computeRecipeStats, loggingStreak } from '../lib/derived'
+import { buildTips, weekInsights } from '../lib/insights'
+import { TipsCard, WeekPulse } from './HomeInsights'
 import { Empty } from './ui'
 
 const RANGES = [
@@ -88,7 +91,7 @@ export function InsightsView() {
 
   if (eaten.length === 0) {
     return (
-      <Empty icon="📊" title="No meals logged yet">
+      <Empty icon={<ChartColumn size={28} />} title="No meals logged yet">
         <p className="muted">Log what you eat for a few days and your stats will show up here.</p>
         <button onClick={() => nav.go('today')}>Log a meal</button>
       </Empty>
@@ -101,6 +104,10 @@ export function InsightsView() {
 
   return (
     <section>
+      <div className="insight-row">
+        <WeekPulse week={weekInsights(data.meals, today)} />
+        <TipsCard tips={buildTips(data, today)} />
+      </div>
       <div className="toolbar">
         <select value={rangeDays} onChange={(e) => setRangeDays(Number(e.target.value))}>
           {RANGES.map((r) => (
@@ -115,7 +122,7 @@ export function InsightsView() {
         <Tile value={stats.total} label="meals logged" />
         <Tile value={`${pct(stats.fromRecipes)}%`} label="home-cooked from your recipes" />
         <Tile value={stats.avgRating != null ? `★ ${stats.avgRating.toFixed(1)}` : '—'} label="average rating" />
-        <Tile value={`🔥 ${streak}`} label={`day logging streak`} />
+        <Tile value={String(streak)} label="day logging streak" />
         <Tile value={stats.leftovers} label="meals from leftovers" />
         <Tile value={stats.newTried} label="new recipes tried" />
       </div>
