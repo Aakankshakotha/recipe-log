@@ -1,20 +1,15 @@
 import { useState, type ReactNode } from 'react'
-import { BookOpen, CalendarCheck, CalendarDays, ChefHat, Check, Plus, RotateCcw, Star, Users } from 'lucide-react'
+import { BookOpen, CalendarCheck, Plus, RotateCcw, Star, Users } from 'lucide-react'
 import { MEAL_TYPES, type MealEntry, type MealType, type Recipe } from '../types'
 import { useStore } from '../store'
 import { useNav } from '../nav'
-import { capitalize, daysBetween, fromISODate, todayISO } from '../lib/dates'
+import { capitalize, daysBetween, fromISODate, mealTypeNow, todayISO } from '../lib/dates'
 import { mealTitle, useRecipeStats, type RecipeStats } from '../lib/derived'
 import { DishImage, Segmented } from './ui'
 
 function greeting() {
   const h = new Date().getHours()
   return h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
-}
-
-function currentSlot(): MealType {
-  const h = new Date().getHours()
-  return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : 'dinner'
 }
 
 const SLOT_LABEL: Record<MealType, string> = {
@@ -33,36 +28,22 @@ export function TodayView() {
   const { data } = store
   const nav = useNav()
   const today = todayISO()
-  const now = currentSlot()
+  const now = mealTypeNow()
   const stats = useRecipeStats()
   const [filter, setFilter] = useState<Filter>('all')
   const name = data.settings.name.trim()
 
-  // The hero is about what's next: a meal planned for today, otherwise an invitation to log one
-  const plannedToday = data.meals
-    .filter((m) => m.date === today && m.status === 'planned')
-    .sort((a, b) => MEAL_TYPES.indexOf(a.mealType) - MEAL_TYPES.indexOf(b.mealType))
-  const upNext = plannedToday.find((m) => m.mealType === now) ?? plannedToday[0]
-  const upNextRecipe = upNext && data.recipes.find((r) => r.id === upNext.recipeId)
-
-  const eaten = data.meals
-    .filter((m) => m.status === 'eaten')
+  const eaten = [...data.meals]
     .sort((a, b) => b.date.localeCompare(a.date) || MEAL_TYPES.indexOf(b.mealType) - MEAL_TYPES.indexOf(a.mealType))
   const latestWithPhoto = eaten.find((m) => m.photoId || data.recipes.find((r) => r.id === m.recipeId)?.photoId)
   const recent = eaten.filter((m) => filter === 'all' || m.mealType === filter).slice(0, 6)
 
   const monthStart = today.slice(0, 8) + '01'
-  const cookedThisMonth = eaten.filter((m) => m.date >= monthStart && m.recipeId && !m.leftoverId).length
+  const cookedThisMonth = eaten.filter((m) => m.date >= monthStart && m.recipeId).length
   const rated = eaten.filter((m) => m.rating != null)
   const avgRating = rated.length ? rated.reduce((s, m) => s + m.rating!, 0) / rated.length : null
 
   const cookAgain = pickCookAgain(data.recipes, stats, today)
-
-  const markEaten = (m: MealEntry) => {
-    if (m.leftoverId) store.takeLeftoverPortion(m.leftoverId)
-    store.upsert('meals', { ...m, status: 'eaten' })
-    nav.toast('Enjoy! Tap the meal to rate it or add a photo')
-  }
 
   const isNewUser = data.recipes.length === 0 && data.meals.length === 0
 
@@ -80,50 +61,26 @@ export function TodayView() {
 
       <div className="hero card">
         <div className="hero-copy">
-          <span className="hero-pill">{SLOT_LABEL[upNext?.mealType ?? now]}</span>
-          {upNext ? (
-            <>
-              <h2 className="hero-heading">{mealTitle(upNext, data)}</h2>
-              <p className="hero-text">
-                Planned for {upNext.mealType}
-                {upNextRecipe?.prepMinutes ? ` · about ${upNextRecipe.prepMinutes} minutes` : ''}. Ready when you are.
-              </p>
-              <div className="hero-actions">
-                {upNextRecipe && (
-                  <button onClick={() => nav.cook(upNextRecipe.id)}>
-                    <ChefHat size={17} aria-hidden /> Start cooking
-                  </button>
-                )}
-                <button className="ghost" onClick={() => markEaten(upNext)}>
-                  <Check size={16} aria-hidden /> Mark as eaten
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="hero-heading">What did you cook today?</h2>
-              <p className="hero-text">
-                Snap a photo, pick a recipe or jot down what you ate. It takes less than a minute.
-              </p>
-              <div className="hero-actions">
-                <button onClick={() => nav.editMeal({ date: today, mealType: now })}>
-                  <Plus size={17} strokeWidth={2.4} aria-hidden /> Log a meal
-                </button>
-                {cookAgain && (
-                  <button className="ghost" onClick={() => nav.openRecipe(cookAgain.id)}>
-                    <RotateCcw size={16} aria-hidden /> Cook one again
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+          <span className="hero-pill">{SLOT_LABEL[now]}</span>
+          <h2 className="hero-heading">What did you cook today?</h2>
+          <p className="hero-text">Snap a photo, add the ingredients and steps, and rate it. It takes less than a minute.</p>
+          <div className="hero-actions">
+            <button onClick={nav.logRecipe}>
+              <Plus size={17} strokeWidth={2.4} aria-hidden /> Log a recipe
+            </button>
+            {cookAgain && (
+              <button className="ghost" onClick={() => nav.openRecipe(cookAgain.id)}>
+                <RotateCcw size={16} aria-hidden /> Cook one again
+              </button>
+            )}
+          </div>
         </div>
-        <HeroImage meal={upNext ?? latestWithPhoto} fallbackName={upNextRecipe?.name ?? cookAgain?.name ?? 'Dinner'} />
+        <HeroImage meal={latestWithPhoto} fallbackName={cookAgain?.name ?? 'Dinner'} />
       </div>
 
       {isNewUser ? (
         <div className="steps-row">
-          <button className="step-card" onClick={() => nav.go('recipes')}>
+          <button className="step-card" onClick={() => nav.go('journal')}>
             <span className="step-icon">
               <BookOpen size={20} />
             </span>
@@ -136,13 +93,6 @@ export function TodayView() {
             </span>
             <strong>Add your family</strong>
             <span className="muted small">Get warnings for allergies</span>
-          </button>
-          <button className="step-card" onClick={() => nav.go('week')}>
-            <span className="step-icon">
-              <CalendarDays size={20} />
-            </span>
-            <strong>Plan the week</strong>
-            <span className="muted small">Then shop for it in one tap</span>
           </button>
         </div>
       ) : (
@@ -161,7 +111,7 @@ export function TodayView() {
         <>
           <div className="section-title recent-head">
             <h2>Recently logged</h2>
-            <button className="link small" onClick={() => nav.go('week')}>
+            <button className="link small" onClick={() => nav.go('journal')}>
               View all
             </button>
           </div>
@@ -182,7 +132,7 @@ export function TodayView() {
                 const title = mealTitle(m, data)
                 return (
                   <li key={m.id}>
-                    <button className="recent-card" onClick={() => nav.editMeal(m)}>
+                    <button className="recent-card" onClick={() => (m.recipeId ? nav.openRecipe(m.recipeId) : undefined)}>
                       <DishImage
                         photoId={m.photoId ?? recipe?.photoId}
                         name={title}

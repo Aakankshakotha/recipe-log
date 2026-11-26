@@ -2,23 +2,14 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type {
   AppData,
   CollectionKey,
-  GroceryItem,
   ItemOf,
-  Leftover,
   MealEntry,
-  PantryItem,
+  MealType,
   Recipe,
   Settings,
 } from './types'
 import { blobToDataURL, dataURLToBlob, deleteImage, getImage, saveImage } from './lib/images'
-import {
-  guessSection,
-  isStaple,
-  mergeIngredients,
-  normalizeName,
-  sameIngredient,
-} from './lib/ingredients'
-import { todayISO } from './lib/dates'
+import { mealTypeNow, todayISO } from './lib/dates'
 
 const STORAGE_KEY = 'recipe-log:v1'
 
@@ -29,11 +20,21 @@ const DEFAULT_SETTINGS: Settings = { name: '', theme: 'system', anthropicApiKey:
 /** Fills in fields added since older versions, so old saves and backups keep working. */
 type Saved<T> = { [K in keyof T]?: T[K] extends (infer U)[] ? Partial<U>[] : T[K] }
 
+type OldMeal = { status?: string; leftoverId?: string | null }
+const isLoggedCook = (m: Partial<MealEntry>) => {
+  const old = m as OldMeal
+  return old.status !== 'planned' && !old.leftoverId
+}
+
+/** Cooking-journal notes now live in the recipe's notes, one dated line each. */
+function withOldJournal(notes: string | undefined, journal: { date: string; text: string }[] = []): string {
+  return [notes ?? '', ...journal.map((j) => `${j.date}: ${j.text}`)].filter(Boolean).join('\n')
+}
+
 export function normalize(raw: Saved<AppData> | null | undefined): AppData {
   const r = raw ?? {}
   return {
-    recipes: (r.recipes ?? []).map(
-      (x) =>
+    recipes: (r.recipes ?? []).map(({ journal, ...x }: Saved<Recipe> & { journal?: { date: string; text: string }[] }) =>
         ({
           name: 'Untitled recipe',
           category: '',
@@ -41,22 +42,20 @@ export function normalize(raw: Saved<AppData> | null | undefined): AppData {
           servings: null,
           ingredients: [],
           steps: [],
-          notes: '',
           tags: [],
           favorite: false,
           photoId: null,
-          journal: [],
           createdAt: new Date().toISOString(),
           ...x,
+          notes: withOldJournal(x.notes, journal),
         }) as Recipe,
     ),
-    meals: (r.meals ?? []).map(
+    // Planned meals and meals eaten from leftovers belonged to features that no longer exist
+    meals: (r.meals ?? []).filter(isLoggedCook).map(
       (x) =>
         ({
           mealType: 'dinner',
-          status: 'eaten',
           recipeId: null,
-          leftoverId: null,
           description: '',
           rating: null,
           notes: '',
@@ -66,11 +65,6 @@ export function normalize(raw: Saved<AppData> | null | undefined): AppData {
         }) as MealEntry,
     ),
     members: (r.members ?? []) as AppData['members'],
-    groceries: (r.groceries ?? []) as AppData['groceries'],
-    pantry: (r.pantry ?? []) as AppData['pantry'],
-    leftovers: (r.leftovers ?? []) as AppData['leftovers'],
-    recurring: (r.recurring ?? []) as AppData['recurring'],
-    templates: (r.templates ?? []) as AppData['templates'],
     settings: { ...DEFAULT_SETTINGS, ...r.settings },
   }
 }
@@ -83,9 +77,6 @@ function load(): AppData {
     return normalize(null)
   }
 }
-
-/** Normalized name for matching pantry / shopping items against recipe ingredients. */
-export const itemKey = (name: string) => normalizeName(name) || name.toLowerCase().trim()
 
 export function useAppData() {
   const [data, setData] = useState<AppData>(load)
@@ -132,19 +123,17 @@ export function useAppData() {
   const updateSettings = (patch: Partial<Settings>) =>
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
 
+  /** Deletes a recipe together with every cook logged for it. */
   const deleteRecipe = (recipe: Recipe) => {
     if (recipe.photoId) deleteImage(recipe.photoId)
-    setData((d) => ({
-      ...d,
-      recipes: d.recipes.filter((r) => r.id !== recipe.id),
-      // Keep meal history, but detach it from the deleted recipe
-      meals: d.meals.map((m) =>
-        m.recipeId === recipe.id
-          ? { ...m, recipeId: null, description: m.description || recipe.name }
-          : m,
-      ),
-      recurring: d.recurring.filter((x) => x.recipeId !== recipe.id),
-    }))
+    setData((d) => {
+      for (const m of d.meals) if (m.recipeId === recipe.id && m.photoId) deleteImage(m.photoId)
+      return {
+        ...d,
+        recipes: d.recipes.filter((r) => r.id !== recipe.id),
+        meals: d.meals.filter((m) => m.recipeId !== recipe.id),
+      }
+    })
   }
 
   const deleteMeal = (meal: MealEntry) => {
@@ -152,56 +141,22 @@ export function useAppData() {
     remove('meals', meal.id)
   }
 
-  /** Takes one portion from a leftover; removes it when none are left. */
-  const takeLeftoverPortion = (leftoverId: string) =>
-    setData((d) => ({
-      ...d,
-      leftovers: d.leftovers
-        .map((l) => (l.id === leftoverId ? { ...l, portions: l.portions - 1 } : l))
-        .filter((l) => l.portions > 0),
-    }))
-
-  /**
-   * Adds ingredients to the shopping list, skipping staples, what's in the pantry and what's
-   * already listed. Returns how many items were added.
-   */
-  const addIngredientsToGroceries = (lines: string[]): number => {
-    const fresh: GroceryItem[] = []
-    for (const m of mergeIngredients(lines)) {
-      if (isStaple(m.key)) continue
-      if (data.pantry.some((p) => sameIngredient(m.key, itemKey(p.name)))) continue
-      if (data.groceries.some((g) => !g.checked && sameIngredient(m.key, itemKey(g.name)))) continue
-      fresh.push({
-        id: newId(),
-        name: m.name,
-        quantity: m.quantity,
-        section: guessSection(m.name),
-        checked: false,
-      })
-    }
-    setData((d) => ({ ...d, groceries: [...d.groceries, ...fresh] }))
-    return fresh.length
-  }
-
-  /** Moves checked shopping items into the pantry. */
-  const moveCheckedToPantry = () =>
-    setData((d) => {
-      const pantry: PantryItem[] = [...d.pantry]
-      for (const g of d.groceries.filter((g) => g.checked)) {
-        if (pantry.some((p) => sameIngredient(itemKey(p.name), itemKey(g.name)))) continue
-        pantry.push({ id: newId(), name: g.name, quantity: g.quantity, section: g.section, expires: null })
-      }
-      return { ...d, pantry, groceries: d.groceries.filter((g) => !g.checked) }
+  /** Records one cook of a recipe: when, how it went, and an optional note or photo. */
+  const logCooked = (
+    recipeId: string,
+    cook: { date?: string; mealType?: MealType; rating?: number | null; notes?: string; photoId?: string | null } = {},
+  ) =>
+    upsert('meals', {
+      id: newId(),
+      date: cook.date ?? todayISO(),
+      mealType: cook.mealType ?? mealTypeNow(),
+      recipeId,
+      description: '',
+      rating: cook.rating ?? null,
+      notes: cook.notes?.trim() ?? '',
+      photoId: cook.photoId ?? null,
+      eatenBy: data.members.map((m) => m.id),
     })
-
-  const clearChecked = () =>
-    setData((d) => ({ ...d, groceries: d.groceries.filter((g) => !g.checked) }))
-
-  const removePantryItems = (ids: string[]) =>
-    setData((d) => ({ ...d, pantry: d.pantry.filter((p) => !ids.includes(p.id)) }))
-
-  const addLeftover = (leftover: Omit<Leftover, 'id'>) =>
-    upsert('leftovers', { ...leftover, id: newId() })
 
   const replaceAll = (next: AppData) => setData(next)
 
@@ -213,12 +168,7 @@ export function useAppData() {
     updateSettings,
     deleteRecipe,
     deleteMeal,
-    takeLeftoverPortion,
-    addIngredientsToGroceries,
-    moveCheckedToPantry,
-    clearChecked,
-    removePantryItems,
-    addLeftover,
+    logCooked,
     replaceAll,
   }
 }

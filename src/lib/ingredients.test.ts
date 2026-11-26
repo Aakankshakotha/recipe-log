@@ -3,11 +3,8 @@ import {
   findAvoided,
   findDurations,
   formatQuantity,
-  guessSection,
-  mergeIngredients,
   normalizeName,
   parseIngredient,
-  sameIngredient,
   scaleIngredient,
 } from './ingredients'
 
@@ -56,27 +53,9 @@ describe('formatQuantity', () => {
   })
 })
 
-describe('mergeIngredients', () => {
-  it('sums matching units across recipes', () => {
-    const merged = mergeIngredients(['1 onion, chopped', '2 onions', '1 cup rice', '½ cup rice', 'salt'])
-    expect(merged).toContainEqual({ key: 'onion', name: 'onion', quantity: '3' })
-    expect(merged).toContainEqual({ key: 'rice', name: 'rice', quantity: '1½ cup' })
-    expect(merged).toContainEqual({ key: 'salt', name: 'salt', quantity: '' })
-  })
-})
-
 describe('matching', () => {
-  it('matches ingredient names loosely', () => {
-    expect(sameIngredient('onion', 'red onion')).toBe(true)
-    expect(sameIngredient('pea', 'peanut')).toBe(false)
+  it('normalizes ingredient names', () => {
     expect(normalizeName('Fresh coriander leaves (for garnish)')).toBe('coriander leave')
-  })
-
-  it('guesses grocery sections', () => {
-    expect(guessSection('2 red onions')).toBe('Produce')
-    expect(guessSection('paneer')).toBe('Dairy & eggs')
-    expect(guessSection('basmati rice')).toBe('Grains & pulses')
-    expect(guessSection('chicken thighs')).toBe('Meat & fish')
   })
 
   it('finds avoided foods including groups', () => {

@@ -1,9 +1,8 @@
-import { Download, HardDrive, Palette, Repeat, Sparkles, Upload, Users } from 'lucide-react'
+import { Download, HardDrive, Palette, Sparkles, Upload, Users } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
-import { MEAL_TYPES, type MealType, type Member, type Theme } from '../types'
+import type { Member, Theme } from '../types'
 import { exportBackup, newId, readBackup, useStore } from '../store'
 import { useNav } from '../nav'
-import { WEEKDAYS, capitalize } from '../lib/dates'
 import { ListInput, Segmented } from './ui'
 
 export function SettingsView() {
@@ -11,7 +10,6 @@ export function SettingsView() {
     <section className="settings">
       <Appearance />
       <Family />
-      <Recurring />
       <AiSettings />
       <Backup />
     </section>
@@ -106,91 +104,6 @@ function MemberRow({ member }: { member: Member }) {
         ✕
       </button>
     </li>
-  )
-}
-
-function Recurring() {
-  const store = useStore()
-  const { data } = store
-  const [weekday, setWeekday] = useState(4)
-  const [mealType, setMealType] = useState<MealType>('dinner')
-  const [recipeId, setRecipeId] = useState('')
-  const [description, setDescription] = useState('')
-
-  const add = (e: FormEvent) => {
-    e.preventDefault()
-    if (!recipeId && !description.trim()) return
-    store.upsert('recurring', {
-      id: newId(),
-      weekday,
-      mealType,
-      recipeId: recipeId || null,
-      description: recipeId ? '' : description.trim(),
-    })
-    setRecipeId('')
-    setDescription('')
-  }
-
-  const sorted = [...data.recurring].sort(
-    (a, b) => a.weekday - b.weekday || MEAL_TYPES.indexOf(a.mealType) - MEAL_TYPES.indexOf(b.mealType),
-  )
-
-  return (
-    <div className="card">
-      <h3 className="settings-title">
-        <Repeat size={18} aria-hidden /> Recurring meals
-      </h3>
-      <p className="muted small">
-        Regular things like “Friday = pizza night”. They appear as suggestions on the Week tab — one tap adds them.
-      </p>
-      {sorted.length > 0 && (
-        <ul className="list compact">
-          {sorted.map((r) => (
-            <li key={r.id}>
-              <span>
-                <strong>{WEEKDAYS[r.weekday]}</strong> {r.mealType}:{' '}
-                {r.recipeId ? data.recipes.find((x) => x.id === r.recipeId)?.name : r.description}
-              </span>
-              <button className="icon-btn small" onClick={() => store.remove('recurring', r.id)} aria-label="Remove">
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <form className="inline-form wrap" onSubmit={add}>
-        <select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
-          {WEEKDAYS.map((d, i) => (
-            <option key={d} value={i}>
-              Every {d}
-            </option>
-          ))}
-        </select>
-        <select value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
-          {MEAL_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {capitalize(t)}
-            </option>
-          ))}
-        </select>
-        <select value={recipeId} onChange={(e) => setRecipeId(e.target.value)}>
-          <option value="">Other (type below)…</option>
-          {[...data.recipes]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-        </select>
-        {!recipeId && (
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Pizza night" />
-        )}
-        <button type="submit" disabled={!recipeId && !description.trim()}>
-          Add
-        </button>
-      </form>
-    </div>
   )
 }
 

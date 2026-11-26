@@ -1,4 +1,3 @@
-import type { GrocerySection } from '../types'
 
 export interface ParsedIngredient {
   quantity: number | null
@@ -118,6 +117,14 @@ export function parseIngredient(line: string): ParsedIngredient {
   return { quantity, quantityMax, unit, name, key: normalizeName(name) }
 }
 
+/** Splits "400 g Orecchiette pasta" into ["400 g", "Orecchiette pasta"] without losing any text. */
+export function splitIngredient(line: string): [string, string] {
+  const text = line.trim()
+  const { quantity, name } = parseIngredient(text)
+  if (quantity == null || !name || !text.endsWith(name)) return ['', text]
+  return [text.slice(0, text.length - name.length).trim(), name]
+}
+
 const NICE_FRACTIONS: [number, string][] = [
   [0.125, '⅛'], [0.25, '¼'], [1 / 3, '⅓'], [0.375, '⅜'], [0.5, '½'], [0.625, '⅝'], [2 / 3, '⅔'], [0.75, '¾'], [0.875, '⅞'],
 ]
@@ -161,68 +168,6 @@ export function scaleIngredient(line: string, factor: number): string {
   const amount = formatAmount(p, factor)
   const plural = p.unit && p.quantity * factor > 1 && ['cup', 'clove', 'can', 'slice', 'piece', 'sprig', 'stick'].includes(p.unit)
   return `${amount}${plural ? 's' : ''} ${p.name}`.trim()
-}
-
-export interface MergedIngredient {
-  key: string
-  name: string
-  quantity: string
-}
-
-/** Combines ingredient lines from several recipes into one shopping list, summing matching units. */
-export function mergeIngredients(lines: string[]): MergedIngredient[] {
-  const groups = new Map<string, { name: string; amounts: Map<string, number>; loose: number }>()
-  for (const line of lines) {
-    const p = parseIngredient(line)
-    if (!p.key) continue
-    const g = groups.get(p.key) ?? { name: p.key, amounts: new Map(), loose: 0 }
-    if (p.quantity == null) g.loose++
-    else {
-      const unit = p.unit ?? ''
-      g.amounts.set(unit, (g.amounts.get(unit) ?? 0) + (p.quantityMax ?? p.quantity))
-    }
-    groups.set(p.key, g)
-  }
-  return [...groups.entries()].map(([key, g]) => ({
-    key,
-    name: g.name,
-    quantity: [...g.amounts.entries()]
-      .map(([unit, q]) => [formatQuantity(q), unit].filter(Boolean).join(' '))
-      .join(' + '),
-  }))
-}
-
-/** True when two normalized names refer to the same thing ("onion" ~ "red onion"). */
-export function sameIngredient(a: string, b: string): boolean {
-  if (!a || !b) return false
-  if (a === b) return true
-  const [short, long] = a.length < b.length ? [a, b] : [b, a]
-  return new RegExp(`(^|\\s)${short.replace(/[-]/g, '\\-')}($|\\s)`).test(long)
-}
-
-// Things nearly every kitchen has; not counted as "missing" when suggesting recipes.
-const STAPLES = ['salt', 'water', 'pepper', 'black pepper', 'oil', 'sugar', 'ice']
-
-export const isStaple = (key: string) => STAPLES.includes(key) || key.endsWith(' oil')
-
-const SECTION_KEYWORDS: [GrocerySection, string[]][] = [
-  ['Frozen', ['frozen', 'ice cream', 'peas frozen']],
-  ['Dairy & eggs', ['milk', 'cheese', 'butter', 'ghee', 'paneer', 'cream', 'yogurt', 'yoghurt', 'curd', 'egg', 'mozzarella', 'parmesan', 'cheddar', 'feta']],
-  ['Meat & fish', ['chicken', 'mutton', 'lamb', 'beef', 'pork', 'fish', 'prawn', 'shrimp', 'salmon', 'tuna', 'bacon', 'sausage', 'mince', 'turkey', 'crab']],
-  ['Bakery', ['bread', 'bun', 'pav', 'tortilla', 'pita', 'naan', 'bagel', 'croissant', 'roll']],
-  ['Grains & pulses', ['rice', 'flour', 'atta', 'maida', 'besan', 'pasta', 'noodle', 'spaghetti', 'oat', 'dal', 'lentil', 'chickpea', 'chana', 'rajma', 'bean', 'quinoa', 'semolina', 'rava', 'sooji', 'poha', 'couscous', 'moong', 'urad', 'toor']],
-  ['Spices & condiments', ['salt', 'pepper', 'cumin', 'jeera', 'turmeric', 'haldi', 'masala', 'chili powder', 'chilli powder', 'paprika', 'coriander powder', 'cinnamon', 'cardamom', 'clove', 'bay leaf', 'mustard seed', 'asafoetida', 'hing', 'oregano', 'thyme', 'basil dried', 'sauce', 'ketchup', 'vinegar', 'oil', 'honey', 'sugar', 'jaggery', 'mayonnaise', 'mustard', 'stock', 'bouillon', 'yeast', 'baking', 'vanilla', 'seed', 'fenugreek', 'methi seed', 'saffron']],
-  ['Snacks & drinks', ['chips', 'biscuit', 'cookie', 'juice', 'soda', 'tea', 'coffee', 'chocolate', 'nut', 'almond', 'cashew', 'peanut', 'walnut', 'raisin']],
-  ['Produce', ['onion', 'tomato', 'potato', 'garlic', 'ginger', 'chili', 'chilli', 'capsicum', 'pepper bell', 'bell pepper', 'carrot', 'spinach', 'palak', 'cabbage', 'cauliflower', 'broccoli', 'pea', 'okra', 'bhindi', 'eggplant', 'brinjal', 'cucumber', 'lettuce', 'lemon', 'lime', 'apple', 'banana', 'mango', 'orange', 'berry', 'grape', 'coriander', 'cilantro', 'mint', 'basil', 'parsley', 'leaf', 'mushroom', 'zucchini', 'pumpkin', 'gourd', 'avocado', 'corn', 'scallion', 'spring onion', 'celery', 'beet', 'radish', 'fruit', 'vegetable', 'herb']],
-  ['Household', ['foil', 'paper', 'soap', 'detergent', 'tissue', 'bag', 'wrap']],
-]
-
-export function guessSection(name: string): GrocerySection {
-  const key = normalizeName(name) || name.toLowerCase()
-  for (const [section, words] of SECTION_KEYWORDS) {
-    if (words.some((w) => sameIngredient(w, key) || key.includes(w))) return section
-  }
-  return 'Other'
 }
 
 // Words people type in "avoid" lists that stand for a whole family of ingredients.

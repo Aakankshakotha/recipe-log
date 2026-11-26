@@ -1,14 +1,15 @@
 import { createContext, useContext } from 'react'
-import type { MealEntry } from './types'
 
-export type Tab = 'today' | 'week' | 'recipes' | 'kitchen' | 'insights' | 'settings'
+export type Tab = 'today' | 'journal' | 'collections' | 'favorites' | 'settings'
 
 export interface Nav {
   go: (tab: Tab) => void
   openRecipe: (id: string) => void
-  /** Opens the meal form: pass an existing meal to edit, or a partial draft for a new one. */
-  editMeal: (draft: Partial<MealEntry>) => void
+  /** Opens the Journal straight on the "Log a recipe" form. */
+  logRecipe: () => void
   cook: (recipeId: string) => void
+  /** Leaves cook mode and opens the recipe on its "How did it go?" card. */
+  finishCooking: (recipeId: string) => void
   toast: (message: string) => void
 }
 

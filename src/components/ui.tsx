@@ -71,6 +71,83 @@ export function DishImage({
   )
 }
 
+/** A square tile: shows the photo (tap to change, with a remove button) or invites you to add one. */
+export function PhotoTile({ photoId, onChange }: { photoId: string | null; onChange: (id: string | null) => void }) {
+  const input = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const url = useImageURL(photoId)
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return
+    setBusy(true)
+    try {
+      const id = await saveImage(await resizeImage(file))
+      if (photoId) deleteImage(photoId)
+      onChange(id)
+    } catch {
+      alert('Could not read that image.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="photo-tile">
+      <button
+        type="button"
+        className={`photo-tile-btn ${url ? 'has-photo' : ''}`}
+        onClick={() => input.current?.click()}
+        disabled={busy}
+        aria-label={url ? 'Change photo' : 'Add a photo'}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          void pick(e.dataTransfer.files[0])
+        }}
+      >
+        {url ? (
+          <>
+            <img src={url} alt="" />
+            <span className="photo-tile-cam" aria-hidden>
+              <Camera size={15} />
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="photo-tile-icon" aria-hidden>
+              <Camera size={18} />
+            </span>
+            <strong>{busy ? 'Saving…' : 'Add a photo'}</strong>
+            <span className="small">Click or drop an image</span>
+          </>
+        )}
+      </button>
+      {url && (
+        <button
+          type="button"
+          className="ghost small danger"
+          onClick={() => {
+            if (photoId) deleteImage(photoId)
+            onChange(null)
+          }}
+        >
+          Remove photo
+        </button>
+      )}
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          void pick(e.target.files?.[0])
+          e.target.value = ''
+        }}
+      />
+    </div>
+  )
+}
+
 /** Shows the current photo with change/remove buttons. Calls onChange with the new image id. */
 export function PhotoPicker({
   photoId,

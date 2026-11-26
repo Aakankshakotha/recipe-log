@@ -1,7 +1,7 @@
 {
   "name": "Recipe Log",
   "short_name": "Recipes",
-  "description": "Save recipes, plan meals and keep track of what you eat.",
+  "description": "A journal of the recipes you cook.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

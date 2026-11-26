@@ -1,32 +1,21 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import {
-  BookOpen,
-  CalendarDays,
-  ChartColumn,
-  CookingPot,
-  House,
-  Settings,
-  ShoppingBasket,
-  type LucideIcon,
-} from 'lucide-react'
+import { BookOpen, CookingPot, Heart, House, Layers, Settings, SquarePen, type LucideIcon } from 'lucide-react'
 import { StoreContext, useAppData } from './store'
 import { NavContext, type Nav, type Tab } from './nav'
-import type { MealEntry } from './types'
 import { TodayView } from './components/TodayView'
-import { WeekView } from './components/WeekView'
-import { RecipesView } from './components/RecipesView'
-import { KitchenView } from './components/KitchenView'
-import { InsightsView } from './components/InsightsView'
+import { JournalView } from './components/JournalView'
+import { CollectionsView } from './components/CollectionsView'
 import { SettingsView } from './components/SettingsView'
-import { MealForm } from './components/MealForm'
 import { CookMode } from './components/CookMode'
 
-const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
+type NavItem = { id: Tab | 'log'; label: string; icon: LucideIcon }
+
+const NAV_ITEMS: NavItem[] = [
   { id: 'today', label: 'Home', icon: House },
-  { id: 'week', label: 'Planner', icon: CalendarDays },
-  { id: 'recipes', label: 'Recipes', icon: BookOpen },
-  { id: 'kitchen', label: 'Kitchen', icon: ShoppingBasket },
-  { id: 'insights', label: 'Insights', icon: ChartColumn },
+  { id: 'journal', label: 'Journal', icon: BookOpen },
+  { id: 'log', label: 'Log a recipe', icon: SquarePen },
+  { id: 'collections', label: 'Collections', icon: Layers },
+  { id: 'favorites', label: 'Favorites', icon: Heart },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -34,14 +23,17 @@ export default function App() {
   const store = useAppData()
   const [tab, setTab] = useState<Tab>('today')
   const [recipeId, setRecipeId] = useState<string | null>(null)
-  const [mealDraft, setMealDraft] = useState<Partial<MealEntry> | null>(null)
+  const [compose, setCompose] = useState(0)
+  const [justCookedId, setJustCookedId] = useState<string | null>(null)
   const [cookingId, setCookingId] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const toastTimer = useRef<number>(undefined)
 
   const go = useCallback((t: Tab) => {
     setTab(t)
-    if (t === 'recipes') setRecipeId(null)
+    setCompose(0)
+    setRecipeId(null)
+    setJustCookedId(null)
     window.scrollTo({ top: 0 })
   }, [])
 
@@ -49,12 +41,24 @@ export default function App() {
     () => ({
       go,
       openRecipe: (id) => {
-        setTab('recipes')
+        setTab('journal')
         setRecipeId(id)
         window.scrollTo({ top: 0 })
       },
-      editMeal: setMealDraft,
+      logRecipe: () => {
+        setTab('journal')
+        setRecipeId(null)
+        setCompose((c) => c + 1)
+        window.scrollTo({ top: 0 })
+      },
       cook: setCookingId,
+      finishCooking: (id) => {
+        setCookingId(null)
+        setTab('journal')
+        setRecipeId(id)
+        setJustCookedId(id)
+        window.scrollTo({ top: 0 })
+      },
       toast: (message) => {
         setToastMsg(message)
         window.clearTimeout(toastTimer.current)
@@ -65,7 +69,7 @@ export default function App() {
   )
 
   const cooking = cookingId ? store.data.recipes.find((r) => r.id === cookingId) : undefined
-  const unchecked = store.data.groceries.filter((g) => !g.checked).length
+  const logging = tab === 'journal' && compose > 0
 
   return (
     <StoreContext.Provider value={store}>
@@ -79,18 +83,20 @@ export default function App() {
               <span>Recipe Log</span>
             </button>
             <nav className="tabs" aria-label="Main">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  className={tab === t.id ? 'tab active' : 'tab'}
-                  onClick={() => go(t.id)}
-                  aria-current={tab === t.id ? 'page' : undefined}
-                >
-                  <t.icon className="tab-icon" size={20} strokeWidth={tab === t.id ? 2.2 : 1.8} aria-hidden />
-                  <span className="tab-label">{t.label}</span>
-                  {t.id === 'kitchen' && unchecked > 0 && <span className="badge">{unchecked}</span>}
-                </button>
-              ))}
+              {NAV_ITEMS.map((t) => {
+                const active = t.id === 'log' ? logging : t.id === 'journal' ? tab === 'journal' && !logging : tab === t.id
+                return (
+                  <button
+                    key={t.id}
+                    className={active ? 'tab active' : 'tab'}
+                    onClick={() => (t.id === 'log' ? nav.logRecipe() : go(t.id))}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <t.icon className="tab-icon" size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden />
+                    <span className="tab-label">{t.label}</span>
+                  </button>
+                )
+              })}
             </nav>
             <button className="profile" onClick={() => go('settings')}>
               <span className="avatar" aria-hidden>
@@ -98,22 +104,32 @@ export default function App() {
               </span>
               <span className="profile-text">
                 <strong>{store.data.settings.name.trim() || 'Add your name'}</strong>
-                <span>{store.data.meals.filter((m) => m.status === 'eaten').length} meals logged</span>
+                <span>{store.data.recipes.length} recipes logged</span>
               </span>
             </button>
           </header>
 
           <main key={tab} className="view">
             {tab === 'today' && <TodayView />}
-            {tab === 'week' && <WeekView />}
-            {tab === 'recipes' && <RecipesView openId={recipeId} setOpenId={setRecipeId} />}
-            {tab === 'kitchen' && <KitchenView />}
-            {tab === 'insights' && <InsightsView />}
+            {tab === 'journal' && (
+              <JournalView
+                key={compose}
+                title="Journal"
+                startInForm={compose > 0}
+                onFormDone={() => setCompose(0)}
+                openId={recipeId}
+                setOpenId={setRecipeId}
+                justCookedId={justCookedId}
+              />
+            )}
+            {tab === 'favorites' && (
+              <JournalView title="Favorites" onlyFavorites openId={recipeId} setOpenId={setRecipeId} />
+            )}
+            {tab === 'collections' && <CollectionsView openId={recipeId} setOpenId={setRecipeId} />}
             {tab === 'settings' && <SettingsView />}
           </main>
         </div>
 
-        {mealDraft && <MealForm initial={mealDraft} onClose={() => setMealDraft(null)} />}
         {cooking && <CookMode recipe={cooking} onClose={() => setCookingId(null)} />}
         {toastMsg && (
           <div className="toast" role="status">

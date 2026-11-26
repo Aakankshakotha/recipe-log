@@ -7,6 +7,12 @@ export function toISODate(d: Date): string {
 
 export const fromISODate = (iso: string) => new Date(iso + 'T00:00:00')
 
+/** The meal slot that fits the current time of day. */
+export function mealTypeNow(): 'breakfast' | 'lunch' | 'dinner' {
+  const h = new Date().getHours()
+  return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : 'dinner'
+}
+
 export const todayISO = () => toISODate(new Date())
 
 export function addDaysISO(iso: string, n: number): string {

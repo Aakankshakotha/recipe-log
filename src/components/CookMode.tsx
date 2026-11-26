@@ -1,7 +1,6 @@
 import { Timer, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Recipe } from '../types'
-import { todayISO } from '../lib/dates'
 import { findDurations } from '../lib/ingredients'
 import { useNav } from '../nav'
 
@@ -108,8 +107,7 @@ export function CookMode({ recipe, onClose }: { recipe: Recipe; onClose: () => v
   }
 
   const finish = () => {
-    onClose()
-    nav.editMeal({ recipeId: recipe.id, status: 'eaten', date: todayISO() })
+    nav.finishCooking(recipe.id)
   }
 
   return (
