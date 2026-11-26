@@ -29,8 +29,12 @@ function tx<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBReque
 
 const urlCache = new Map<string, string>()
 
+export const IMAGE_SAVED = 'recipe-log:image-saved'
+
 export async function saveImage(blob: Blob, id: string = crypto.randomUUID()): Promise<string> {
   await tx('readwrite', (s) => s.put(blob, id))
+  // Lets pictures that were still missing (e.g. just synced from another device) appear
+  window.dispatchEvent(new CustomEvent(IMAGE_SAVED, { detail: id }))
   return id
 }
 
@@ -58,9 +62,13 @@ export function useImageURL(id: string | null | undefined): string | null {
   useEffect(() => {
     if (!id) return
     let cancelled = false
-    getImageURL(id).then((url) => !cancelled && setLoaded({ id, url }))
+    const load = () => getImageURL(id).then((url) => !cancelled && setLoaded({ id, url }))
+    load()
+    const onSaved = (e: Event) => (e as CustomEvent<string>).detail === id && load()
+    window.addEventListener(IMAGE_SAVED, onSaved)
     return () => {
       cancelled = true
+      window.removeEventListener(IMAGE_SAVED, onSaved)
     }
   }, [id])
   return id && loaded?.id === id ? loaded.url : null

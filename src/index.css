@@ -2241,3 +2241,7 @@ button svg {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
+.error-text {
+  color: var(--danger);
+}

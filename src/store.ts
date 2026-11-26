@@ -160,6 +160,9 @@ export function useAppData() {
 
   const replaceAll = (next: AppData) => setData(next)
 
+  /** For sync: changes arriving from another device. */
+  const applyRemoteData = (update: (d: AppData) => AppData) => setData(update)
+
   return {
     data,
     upsert,
@@ -170,6 +173,7 @@ export function useAppData() {
     deleteMeal,
     logCooked,
     replaceAll,
+    applyRemoteData,
   }
 }
 

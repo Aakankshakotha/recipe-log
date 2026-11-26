@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { BookOpen, CookingPot, Heart, House, Layers, Settings, SquarePen, type LucideIcon } from 'lucide-react'
 import { StoreContext, useAppData } from './store'
 import { NavContext, type Nav, type Tab } from './nav'
+import { SyncContext, useSync } from './sync'
 import { TodayView } from './components/TodayView'
 import { JournalView } from './components/JournalView'
 import { CollectionsView } from './components/CollectionsView'
@@ -21,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function App() {
   const store = useAppData()
+  const sync = useSync(store.data, store.applyRemoteData)
   const [tab, setTab] = useState<Tab>('today')
   const [recipeId, setRecipeId] = useState<string | null>(null)
   const [compose, setCompose] = useState(0)
@@ -73,6 +75,7 @@ export default function App() {
 
   return (
     <StoreContext.Provider value={store}>
+      <SyncContext.Provider value={sync}>
       <NavContext.Provider value={nav}>
         <div className="app">
           <header className="header">
@@ -137,6 +140,7 @@ export default function App() {
           </div>
         )}
       </NavContext.Provider>
+      </SyncContext.Provider>
     </StoreContext.Provider>
   )
 }

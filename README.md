@@ -22,6 +22,19 @@ Built with React + TypeScript + Vite. There's no server: everything is stored in
 
 **Settings**: family members and foods they avoid (group words like *nuts, dairy, gluten, non-veg* work), the AI key, light/dark theme, and backup/restore (a JSON file that includes photos).
 
+## Sharing one recipe book across phones and laptops (optional)
+
+By default everything stays on the device. To share it with someone else, or keep your own phone and laptop in step, connect a free [Supabase](https://supabase.com) project. Everyone uses **one shared login**.
+
+1. Create a Supabase project (free tier).
+2. **SQL Editor** → New query → paste `supabase/schema.sql` → Run. This creates a private table and a private photo bucket.
+3. **Authentication → Users → Add user** → create the shared email and password (tick *Auto Confirm*). Then **Authentication → Sign In / Providers**, and turn **off** "Allow new users to sign up" so nobody else can create a login.
+4. **Project Settings → API**: copy the *Project URL* and the *anon public* key.
+5. For the deployed site, add them as repository **variables** named `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Settings → Secrets and variables → Actions → Variables), then re-run the deploy. To try it locally, copy `.env.example` to `.env.local`.
+6. On each device open **Settings → Sync between devices** and sign in.
+
+How it behaves: changes are sent a moment after you make them and picked up when you reopen the app (and every 30 seconds while it's open). Each recipe and cook syncs separately, and if two devices edit the same item the last edit wins. Anything already on a device is merged in when it first signs in. The theme and the AI key stay local. Restoring a backup replaces your data, and with sync on that replacement is shared too.
+
 ## Run it
 
 ```bash
